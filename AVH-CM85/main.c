@@ -22,10 +22,12 @@
 
 #include "stdout_USART.h"
 
-int main(int argc, char **argv) {
-  stdout_init();
-  printf("Starting det inference:\n");
+int main(int argc, char **argv) 
+{
+	stdout_init();
+
+	printf("Hello AVH-CM85 ...\n");
 
 	printf("EXITTHESIM\r\n");
-  return 0;
+  	return 0;
 }
