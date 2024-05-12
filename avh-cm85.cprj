@@ -18,7 +18,7 @@
   </compilers>
 
   <target Ddsp="DSP" Dfpu="DP_FPU" Dmve="FP_MVE" Dname="SSE-310-MPS3_FVP" Dsecure="TZ-disabled" Dtz="TZ" Dvendor="ARM:82">
-    <output elf="object_detection.axf" intdir="tmp/object_detection/PicodetM85" name="object_detection" outdir="out/object_detection/PicodetM85" rtedir="RTE" type="exe"/>
+    <output elf="image.axf" intdir="./Objects/" name="image" outdir="./Objects/" rtedir="RTE" type="exe"/>
     <options debug="on" optimize="none"/>
     <asflags add="-masm=auto" compiler="AC6"/>
     <cflags add="-std=c99 -mthumb -fno-rtti -funsigned-char -fshort-enums -fshort-wchar -ffunction-sections -w" compiler="AC6"/>

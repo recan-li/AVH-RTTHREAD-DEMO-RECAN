@@ -1,5 +1,5 @@
 
-AVH_DEMO_PATH       := AVH-CM85
+AVH_DEMO_PATH       := .
 USER_CONFIG_PATH    := config
 OUT_PATH            := out
 AVH_SIMLIMIT_TIME   := 800
@@ -31,8 +31,8 @@ source:
 build:
 	@echo "Building ..."
 	@test -e $(OUT_PATH) || mkdir -p $(OUT_PATH)
-	cbuild --packs $(AVH_DEMO_PATH)/object_detection+PicodetM85.cprj
-	@cp -rf $(AVH_DEMO_PATH)/out/object_detection/PicodetM85/object_detection.axf $(OUT_PATH)/image.axf
+	cbuild --packs $(AVH_DEMO_PATH)/avh-cm85.cprj
+	@cp -rf Objects/image.axf $(OUT_PATH)/image.axf
 
 run:
 	@echo "Running ..."
@@ -40,8 +40,7 @@ run:
 
 clean:
 	@echo "Clean ..."
-	rm -rf $(AVH_DEMO_PATH)/out
-	rm -rf $(AVH_DEMO_PATH)/tmp
+	rm -rf Objects
 	rm -rf $(OUT_PATH)
 
 pip:
