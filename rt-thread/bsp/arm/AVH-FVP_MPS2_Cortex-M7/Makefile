@@ -17,6 +17,7 @@ help:
 	@echo "make run 	-> Run this demo."
 	@echo "make debug 	-> Build & run this demo."
 	@echo "make all 	-> Source & clean & build & run all together."
+	@echo "make stop    -> Stop to run this demo."
 
 debug: build run stop
 

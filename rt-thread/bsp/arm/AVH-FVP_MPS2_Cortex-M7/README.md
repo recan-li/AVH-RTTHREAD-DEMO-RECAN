@@ -12,6 +12,8 @@ It use makefile to build this project.
 - `make run`: To run the built out sample file (*.axf).
 - `make debug`: The operation `make build + make run`.
 - `make all`: The operation `make clean + make build + make run`.
+- `make stop`: To stop running *.axf file.
+
 
 # Log msg
 
