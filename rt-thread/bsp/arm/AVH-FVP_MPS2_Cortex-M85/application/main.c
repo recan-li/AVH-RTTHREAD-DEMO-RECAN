@@ -19,10 +19,18 @@
 #include <stdio.h>
 #include <rtthread.h>
 
+void main_thread_entry22(void *arg)
+{
+    while (1) {
+        printf("22222 %s:%d\n", __func__, __LINE__);
+        rt_thread_delay(1000);
+    }
+}
+
 int main (void) 
 {   
     int cnt = 1;
-
+printf("%s:%d\n", __func__, __LINE__);
     extern int avh_rtt_debug_server_main(int argc, const char *argv[]);
     const char *argv[] = 
     {
@@ -30,12 +38,20 @@ int main (void)
         "12345",
         "12346",
     };
-    avh_rtt_debug_server_main(3, argv);
+    //avh_rtt_debug_server_main(3, argv);
     printf("%s:%d\n", __func__, __LINE__);
+
+
+    rt_thread_t tid;
+
+    tid = rt_thread_create("main", main_thread_entry22, RT_NULL,
+                           RT_MAIN_THREAD_STACK_SIZE, RT_MAIN_THREAD_PRIORITY, 20);
+    rt_thread_startup(tid);
+
     while (1)
     {
         //printf("===== %d ...\n", cnt++);
-        //rt_kprintf("=====--- %d ...\n", cnt++);
+        rt_kprintf("=====--- %d ...\n", cnt++);
         //printf(" root\n");
         rt_thread_delay(10000);
     }

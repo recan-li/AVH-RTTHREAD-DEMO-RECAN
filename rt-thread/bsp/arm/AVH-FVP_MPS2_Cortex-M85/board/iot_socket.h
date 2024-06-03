@@ -45,7 +45,7 @@ extern "C"
 #endif
 
 #include <stdint.h>
-
+#include "arm_vsocket.h"
 
 /**** Address Family definitions ****/
 #define IOT_SOCKET_AF_INET              1       ///< IPv4

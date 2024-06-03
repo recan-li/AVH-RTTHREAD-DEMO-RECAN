@@ -10,40 +10,37 @@
     <license>Apache 2.0, BSD 3-Clause</license>
   </info>
 
-  <packages>
-    <package name="CMSIS-Driver" vendor="ARM"/>
+  <packages>    
+    <package name="Cortex_DFP" vendor="ARM" version="1.1.0:1.1.0"/>
+    <package name="CMSIS-Driver" vendor="ARM" version="2.8.0:2.8.0"/>
     <package name="CMSIS" vendor="ARM" version="5.9.0:5.9.0"/>
-    <package name="V2M-MPS2_CMx_BSP" vendor="Keil" version="1.8.0:1.8.0"/>
     <package name="ARM_Compiler" vendor="Keil" version="1.6.3:1.6.3"/>
+    <package name="V2M-MPS2_CMx_BSP" vendor="Keil" version="1.8.0:1.8.0"/>
   </packages>
 
   <compilers>
     <compiler name="AC6" version="6.0.0:6.99.99"/>
   </compilers>
 
-  <target Ddsp="NO_DSP" Dendian="Little-endian" Dfpu="DP_FPU" Dmve="NO_MVE" Dname="CMSDK_CM7_DP_VHT" Dsecure="Non-secure" Dtz="NO_TZ" Dvendor="ARM:82">
+  <target Ddsp="NO_DSP" Dendian="Little-endian" Dfpu="DP_FPU" Dmve="NO_MVE" Dname="ARMCM85" Dsecure="Non-secure" Dtz="NO_TZ" Dvendor="ARM:82">
     <output intdir="./Objects/" name="image" outdir="./Objects/" type="exe"/>
-    <ldflags add="--no_debug --remove --strict --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols --info sizes --info totals --info unused --info veneers --entry=Reset_Handler" compiler="AC6" file="./RTE/Device/CMSDK_CM7_DP_VHT/ac6_arm.sct"/>
-    <cflags add="-save-temps=obj -D__FPU_USED=1 -D__TARGET_FPU_VFP=1 -DARM_MATH_CM7=1 -O1 -Wno-documentation -Wno-documentation-unknown-command -Wno-license-management -Wno-missing-noreturn -Wno-missing-prototypes -Wno-missing-variable-declarations -Wno-nonportable-include-path -Wno-packed -Wno-parentheses-equality -Wno-reserved-id-macro -Wno-sign-conversion -Wno-unused-macros -ffunction-sections -fdata-sections -fno-rtti -fshort-enums -fshort-wchar -funsigned-char -gdwarf-4 -std=c99 -xc -mfloat-abi=hard -I./ -I./config" compiler="AC6"/>
+    <ldflags add="--no_debug --remove --strict --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols --info sizes --info totals --info unused --info veneers --entry=Reset_Handler" compiler="AC6" file="./RTE/Device/ARMCM85/ARMCM85_ac6.sct" regions="./RTE/Device/ARMCM85/regions_ARMCM85.h"/>
+    <cflags add="-save-temps=obj -D__FPU_USED=1 -D__TARGET_FPU_VFP=1 -DARM_MATH_CM7=1 -O1 -Wno-documentation -Wno-documentation-unknown-command -Wno-license-management -Wno-missing-noreturn -Wno-missing-prototypes -Wno-missing-variable-declarations -Wno-nonportable-include-path -Wno-packed -Wno-parentheses-equality -Wno-reserved-id-macro -Wno-sign-conversion -Wno-unused-macros -ffunction-sections -fdata-sections -fno-rtti -fshort-enums -fshort-wchar -funsigned-char -gdwarf-4 -std=c99 -xc -mfloat-abi=hard -I ./ -I ./config -I ./RTE/_AVH-FVP_MPS2_Cortex-M85 -I /home/ubuntu/packs/ARM/CMSIS/5.9.0/CMSIS/Driver/Include" compiler="AC6"/>
     <includes>./config</includes>
   </target>
 
   <components>
     <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM"/>
-    <component Cclass="CMSIS Driver" Cgroup="USART" Cvendor="Keil"/>
-    <component Cclass="Device" Cgroup="Startup" Cvariant="C Startup" Cvendor="Keil">
-      <file attr="config" category="header" name="CMSIS/Config/RTE_Device.h" version="1.0.0"/>
-      <file attr="config" category="linkerScript" name="Device/CMSDK_CM7/Source/ARM/ac6_arm.sct" version="1.0.0"/>
-      <file attr="config" category="sourceC" name="Device/CMSDK_CM7/Source/startup_CMSDK_CM7.c" version="1.1.0"/>
-      <file attr="config" category="sourceC" name="Device/CMSDK_CM7/Source/system_CMSDK_CM7.c" version="1.1.0"/>
+    <component Cclass="Device" Cgroup="Startup" Cvariant="C Startup" Cvendor="ARM" Cversion="1.0.0" rtedir="./RTE">
+      <file attr="config" category="linkerScript" name="Device/ARMCM85/Config/ARMCM85_ac6.sct" version="1.0.0"/>
+      <file attr="config" category="sourceC" name="Device/ARMCM85/Source/startup_ARMCM85.c" version="1.0.0"/>
+      <file attr="config" category="sourceC" name="Device/ARMCM85/Source/system_ARMCM85.c" version="1.0.0"/>
     </component>
-    <component Cbundle="V2M-MPS2" Cclass="Board Support" Cgroup="Common" Cvendor="Keil"/>
-    
   </components>
 
   <files>
   
-	<cflags add="-DARM_AVH_UART_PRINTF_ENABLE=1 -DFINSH_ECHO_DISABLE_DEFAULT -Wno-unused-value -save-temps=obj -I ./ -I ./board -I ../../../components/drivers/include -I ../../../components/libc/posix/io/eventfd -I ../../../components/libc/posix/io/poll -I ../../../libcpu/arm/common -I . -I ../../../components/libc/compilers/common/include -I ../../../components/libc/posix/ipc -I board/ports/wifi -I ../../../components/libc/compilers/common/extension/fcntl/octal -I ../../../include -I ../../../components/libc/posix/io/epoll -I ../../../components/drivers/include -I ../../../components/drivers/include -I ../../../components/libc/compilers/common/extension -I board/ports -I ../../../components/finsh -I ../../../libcpu/arm/cortex-m7 -I board -I ../../../components/drivers/include -D__RTTHREAD__ -D__RT_KERNEL_SOURCE__ -D__xSTD_IN_OUT_ERR -D__DSP_PRESENT=1" compiler="AC6"/>
+	<cflags add="-DARM_AVH_UART_PRINTF_ENABLE=1 -DFINSH_ECHO_DISABLE_DEFAULT -Wno-unused-value -save-temps=obj -I ./ -I ./board -I ../../../components/drivers/include -I ../../../components/libc/posix/io/eventfd -I ../../../components/libc/posix/io/poll -I ../../../libcpu/arm/common -I . -I ../../../components/libc/compilers/common/include -I ../../../components/libc/posix/ipc -I board/ports/wifi -I ../../../components/libc/compilers/common/extension/fcntl/octal -I ../../../include -I ../../../components/libc/posix/io/epoll -I ../../../components/drivers/include -I ../../../components/drivers/include -I ../../../components/libc/compilers/common/extension -I board/ports -I ../../../components/finsh -I ../../../libcpu/arm/cortex-m7 -I board -I ../../../components/drivers/include -D__RTTHREAD__ -D__RT_KERNEL_SOURCE__ -D__xSTD_IN_OUT_ERR" compiler="AC6"/>
 
     <group name="Documentation">
       <file category="doc" name="./README.md"/>
@@ -55,13 +52,14 @@
       <file category="sourceC" name="./board/board.c"/>
       <file category="sourceC" name="./board/drv_usart_v2.c"/>
       <file category="sourceC" name="./board/avh_rtt_debug.c"/>
+      <file category="sourceC" name="/home/ubuntu/packs/ARM/CMSIS/5.9.0/CMSIS/Driver/DriverTemplates/Driver_USART.c"/>
     </group>
 	
-	<group name="Application">
+	  <group name="Application">
       <file category="sourceC" name="./application/main.c"/>
     </group>
 
-	<group name="rt-thread">
+	  <group name="rt-thread">
       <file category="sourceC" name="../../../components/libc/compilers/armlibc/syscall_mem.c"/>
       <file category="sourceC" name="../../../components/libc/compilers/armlibc/syscalls.c"/>
       <file category="sourceC" name="../../../components/libc/compilers/common/cctype.c"/>

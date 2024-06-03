@@ -88,6 +88,9 @@ int stderr_putchar (int ch)
     if (ptrUSART->Send(buf, 1) != ARM_DRIVER_OK) {
         return (-1);
     }
+    if (ptrUSART->Send(buf, 1) != ARM_DRIVER_OK) {
+        return (-1);
+    }
     while (ptrUSART->GetTxCount() != 1);
     return (ch);
 }
@@ -103,6 +106,9 @@ int stdout_putchar (int ch)
     uint8_t buf[1];
 
     buf[0] = ch;
+    if (ptrUSART->Send(buf, 1) != ARM_DRIVER_OK) {
+        return (-1);
+    }
     if (ptrUSART->Send(buf, 1) != ARM_DRIVER_OK) {
         return (-1);
     }

@@ -86,4 +86,5 @@ printf("%s:%d\n", __func__, __LINE__);
 #ifdef RT_USING_COMPONENTS_INIT
     rt_components_board_init();
 #endif 
+    printf("%s:%d\n", __func__, __LINE__);
 }
