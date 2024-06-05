@@ -24,7 +24,8 @@
   <target Ddsp="NO_DSP" Dendian="Little-endian" Dfpu="DP_FPU" Dmve="NO_MVE" Dname="CMSDK_CM7_DP_VHT" Dsecure="Non-secure" Dtz="NO_TZ" Dvendor="ARM:82">
     <output intdir="./Objects/" name="image" outdir="./Objects/" type="exe"/>
     <ldflags add="--no_debug --remove --strict --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols --info sizes --info totals --info unused --info veneers --entry=Reset_Handler" compiler="AC6" file="./RTE/Device/CMSDK_CM7_DP_VHT/ac6_arm.sct"/>
-    <cflags add="-save-temps=obj -D__FPU_USED=1 -D__TARGET_FPU_VFP=1 -DARM_MATH_CM7=1 -O1 -Wno-documentation -Wno-documentation-unknown-command -Wno-license-management -Wno-missing-noreturn -Wno-missing-prototypes -Wno-missing-variable-declarations -Wno-nonportable-include-path -Wno-packed -Wno-parentheses-equality -Wno-reserved-id-macro -Wno-sign-conversion -Wno-unused-macros -ffunction-sections -fdata-sections -fno-rtti -fshort-enums -fshort-wchar -funsigned-char -gdwarf-4 -std=c99 -xc -mfloat-abi=hard -I./ -I./config" compiler="AC6"/>
+    <cflags add="-save-temps=obj -D__FPU_USED=1 -D__TARGET_FPU_VFP=1 -DARM_MATH_CM7=1 -O1 -Wno-documentation -Wno-documentation-unknown-command -Wno-license-management -Wno-missing-noreturn -Wno-missing-prototypes -Wno-missing-variable-declarations -Wno-nonportable-include-path -Wno-packed -Wno-parentheses-equality -Wno-reserved-id-macro -Wno-sign-conversion -Wno-unused-macros -ffunction-sections -fdata-sections -fno-rtti -fshort-enums -fshort-wchar -funsigned-char -gdwarf-4 -std=c99 -xc -mfloat-abi=hard -I ./ -I ./config" compiler="AC6"/>
+    <asflags add="-I ./"  compiler="AC6"/>
     <includes>./config</includes>
   </target>
 
