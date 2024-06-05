@@ -37,7 +37,7 @@ build:
 run:
 	@echo "Running ..."
 #	--simlimit $(AVH_SIMLIMIT_TIME) FVP_MPS2_Cortex-M85 FVP_Corstone_SSE-310
-	/opt/VHT/bin/FVP_MPS2_Cortex-M85 --stat -f $(AVH_DEMO_PATH)/vht_config.txt $(OUT_PATH)/image.axf
+	/opt/VHT/bin/FVP_Corstone_SSE-310 --stat -f $(AVH_DEMO_PATH)/vht_config_mps3.txt $(OUT_PATH)/image.axf
 
 objdump:
 	arm-none-eabi-objdump -l -x -d  $(OUT_PATH)/image.axf > $(OUT_PATH)/image.axf.asm

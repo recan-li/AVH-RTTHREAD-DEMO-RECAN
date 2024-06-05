@@ -141,7 +141,6 @@ int stdio_init(void)
 
 int stderr_putchar(int ch)
 {
-    printf("%c", ch);
     return 0;
 }
 

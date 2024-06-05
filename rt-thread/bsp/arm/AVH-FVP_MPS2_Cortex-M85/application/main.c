@@ -30,7 +30,6 @@ void main_thread_entry22(void *arg)
 int main (void) 
 {   
     int cnt = 1;
-printf("%s:%d\n", __func__, __LINE__);
     extern int avh_rtt_debug_server_main(int argc, const char *argv[]);
     const char *argv[] = 
     {
@@ -38,9 +37,7 @@ printf("%s:%d\n", __func__, __LINE__);
         "12345",
         "12346",
     };
-    //avh_rtt_debug_server_main(3, argv);
-    printf("%s:%d\n", __func__, __LINE__);
-
+    avh_rtt_debug_server_main(3, argv);
 
     rt_thread_t tid;
 

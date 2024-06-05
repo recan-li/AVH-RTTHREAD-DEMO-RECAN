@@ -51,7 +51,6 @@ static rt_err_t cm_uart_control(struct rt_serial_device *serial, int cmd, void *
 
 static int cm_uart_putc(struct rt_serial_device *serial, char c)
 {
-    //printf("%c", c);
     stdout_putchar(c);
     return RT_EOK;
 }

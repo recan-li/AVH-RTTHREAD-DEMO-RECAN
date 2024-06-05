@@ -52,7 +52,7 @@
       <file category="sourceC" name="./board/board.c"/>
       <file category="sourceC" name="./board/drv_usart_v2.c"/>
       <file category="sourceC" name="./board/avh_rtt_debug.c"/>
-      <file category="sourceC" name="/home/ubuntu/packs/ARM/CMSIS/5.9.0/CMSIS/Driver/DriverTemplates/Driver_USART.c"/>
+      <file category="sourceC" name="./board/Driver_USART_TMP.c"/>
     </group>
 	
 	  <group name="Application">

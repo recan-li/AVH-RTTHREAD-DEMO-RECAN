@@ -76,7 +76,7 @@ void rt_hw_board_init(void)
 #ifdef RT_USING_SERIAL
     rt_hw_usart_init();
 #endif
-printf("%s:%d\n", __func__, __LINE__);
+
     /* Set the shell console output device */
 #if defined(RT_USING_CONSOLE) && defined(RT_USING_DEVICE)
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
@@ -86,5 +86,4 @@ printf("%s:%d\n", __func__, __LINE__);
 #ifdef RT_USING_COMPONENTS_INIT
     rt_components_board_init();
 #endif 
-    printf("%s:%d\n", __func__, __LINE__);
 }

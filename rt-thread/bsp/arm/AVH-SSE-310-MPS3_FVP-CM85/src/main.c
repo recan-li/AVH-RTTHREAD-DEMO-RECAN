@@ -24,7 +24,7 @@
 #include <rtthread.h>
 #endif
 
-int user_main(int argc, char **argv) 
+int main(void) 
 {
 #if !(CFG_RTT_ENABLE)
 	stdout_init();
