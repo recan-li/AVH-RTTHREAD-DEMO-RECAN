@@ -3,9 +3,9 @@
  *
  *  This file is part of the ZBar Bar Code Reader.
  *
- *  The ZBar Bar Code Reader is free software; you can redistribute it
+ *  The ZBar Bar Code Reader is rt_free software; you can redistribute it
  *  and/or modify it under the terms of the GNU Lesser Public License as
- *  published by the Free Software Foundation; either version 2.1 of
+ *  published by the rt_free Software Foundation; either version 2.1 of
  *  the License, or (at your option) any later version.
  *
  *  The ZBar Bar Code Reader is distributed in the hope that it will be
@@ -14,7 +14,7 @@
  *  GNU Lesser Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser Public License
- *  along with the ZBar Bar Code Reader; if not, write to the Free
+ *  along with the ZBar Bar Code Reader; if not, write to the rt_free
  *  Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  *  Boston, MA  02110-1301  USA
  *
@@ -26,7 +26,7 @@
 #ifdef HAVE_INTTYPES_H
 # include <inttypes.h>
 #endif
-#include <stdlib.h>     /* malloc, free */
+#include <stdlib.h>     /* rt_malloc, rt_free */
 //#include <time.h>       /* clock_gettime */
 //#include <sys/time.h>   /* gettimeofday */
 #include <string.h>     /* memcmp, memset, memcpy */
@@ -146,7 +146,7 @@ void _zbar_image_scanner_recycle_syms (zbar_image_scanner_t *iscn,
                     assert(0);
                 _zbar_image_scanner_recycle_syms(iscn, sym->syms->head);
                 sym->syms->head = NULL;
-                _zbar_symbol_set_free(sym->syms);
+                _zbar_symbol_set_rt_free(sym->syms);
                 sym->syms = NULL;
             }
             int i;
@@ -155,7 +155,7 @@ void _zbar_image_scanner_recycle_syms (zbar_image_scanner_t *iscn,
                     break;
             if(i == RECYCLE_BUCKETS) {
                 assert(sym->data);
-                free(sym->data);
+                rt_free(sym->data);
                 sym->data = NULL;
                 sym->data_alloc = 0;
                 i = 0;
@@ -205,7 +205,7 @@ inline void zbar_image_scanner_recycle_image (zbar_image_scanner_t *iscn,
 
         /* select one set to resurrect, destroy the other */
         if(iscn->syms) {
-            _zbar_symbol_set_free(syms);
+            _zbar_symbol_set_rt_free(syms);
             syms = iscn->syms;
         }
         else
@@ -238,7 +238,7 @@ _zbar_image_scanner_alloc_sym (zbar_image_scanner_t *iscn,
         iscn->recycle[i].nsyms--;
     }
     else {
-        sym = calloc(1, sizeof(zbar_symbol_t));
+        sym = rt_calloc(1, sizeof(zbar_symbol_t));
         STAT(sym_new);
     }
 
@@ -254,14 +254,14 @@ _zbar_image_scanner_alloc_sym (zbar_image_scanner_t *iscn,
         sym->datalen = datalen - 1;
         if(sym->data_alloc < datalen) {
             if(sym->data)
-                free(sym->data);
+                rt_free(sym->data);
             sym->data_alloc = datalen;
-            sym->data = malloc(datalen);
+            sym->data = rt_malloc(datalen);
         }
     }
     else {
         if(sym->data)
-            free(sym->data);
+            rt_free(sym->data);
         sym->data = NULL;
         sym->datalen = sym->data_alloc = 0;
     }
@@ -448,7 +448,7 @@ static void symbol_handler (zbar_decoder_t *dcode)
 
 zbar_image_scanner_t *zbar_image_scanner_create ()
 {
-    zbar_image_scanner_t *iscn = calloc(1, sizeof(zbar_image_scanner_t));
+    zbar_image_scanner_t *iscn = rt_calloc(1, sizeof(zbar_image_scanner_t));
     if(!iscn)
         return(NULL);
     iscn->dcode = zbar_decoder_create();
@@ -494,7 +494,7 @@ void zbar_image_scanner_destroy (zbar_image_scanner_t *iscn)
         if(iscn->syms->refcnt)
             zbar_symbol_set_ref(iscn->syms, -1);
         else
-            _zbar_symbol_set_free(iscn->syms);
+            _zbar_symbol_set_rt_free(iscn->syms);
         iscn->syms = NULL;
     }
     if(iscn->scn)
@@ -508,7 +508,7 @@ void zbar_image_scanner_destroy (zbar_image_scanner_t *iscn)
         zbar_symbol_t *sym, *next;
         for(sym = iscn->recycle[i].head; sym; sym = next) {
             next = sym->next;
-            _zbar_symbol_free(sym);
+            _zbar_symbol_rt_free(sym);
         }
     }
 #ifdef ENABLE_QRCODE
@@ -517,7 +517,7 @@ void zbar_image_scanner_destroy (zbar_image_scanner_t *iscn)
         iscn->qr = NULL;
     }
 #endif
-    free(iscn);
+    rt_free(iscn);
 }
 
 zbar_image_data_handler_t*
@@ -656,7 +656,6 @@ int zbar_scan_image (zbar_image_scanner_t *iscn,
         iscn->v = y;
 
         zbar_scanner_new_scan(scn);
-
         while(y < h) {
             zprintf(128, "img_x+: %04d,%04d @%p\n", x, y, p);
             svg_path_start("vedge", 1. / 32, 0, y + 0.5);
@@ -707,7 +706,6 @@ int zbar_scan_image (zbar_image_scanner_t *iscn,
             border = w / 2;
         movedelta(border, 0);
         iscn->v = x;
-
         while(x < w) {
             zprintf(128, "img_y+: %04d,%04d @%p\n", x, y, p);
             svg_path_start("vedge", 1. / 32, 0, x + 0.5);
@@ -772,7 +770,6 @@ int zbar_scan_image (zbar_image_scanner_t *iscn,
 
     if(syms->nsyms && iscn->handler)
         iscn->handler(img, iscn->userdata);
-
     svg_close();
     return(syms->nsyms);
 }

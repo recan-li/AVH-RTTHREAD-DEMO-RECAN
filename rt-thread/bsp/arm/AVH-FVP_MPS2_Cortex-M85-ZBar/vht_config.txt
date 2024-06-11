@@ -14,4 +14,5 @@ fvp_mps2.platform_type=1
 cpu0.ID_ISAR5.PACBTI=2
 cpu0.FPU=1
 cpu0.MVE=2
+fvp_mps2.v_path=VSI/data_sensor/python/
 #------------------------------------------------------------------------------

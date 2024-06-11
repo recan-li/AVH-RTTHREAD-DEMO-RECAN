@@ -12,7 +12,6 @@
 
 #define CFG_SIGNAL_ENABLE 			0
 #define CFG_PTHREAD_ENABLE 			0
-#define CFG_AWS_IOT_SOCKET_ENABLE 	1
 
 #if (CFG_SIGNAL_ENABLE)
 #include <signal.h>

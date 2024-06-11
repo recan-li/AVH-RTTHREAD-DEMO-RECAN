@@ -55,7 +55,8 @@
 //   <o> Region size [bytes] <0x0-0xFFFFFFFF:8>
 //   <i> Defines size of memory region.
 //   <i> Default: 0x00020000
-#define __RAM0_SIZE 0x00020000
+// max for 0x00040000(128KB*2=256KB)*, pls refer to https://www.keil.arm.com/devices/arm-armcm85/features/
+#define __RAM0_SIZE 0x00040000
 //   <q>Default region
 //   <i> Enables memory region globally for the application.
 #define __RAM0_DEFAULT 1
@@ -87,7 +88,7 @@
 //   <o0> Stack Size (in Bytes) <0x0-0xFFFFFFFF:8>
 //   <o1> Heap Size (in Bytes) <0x0-0xFFFFFFFF:8>
 #define __STACK_SIZE 0x00000400
-#define __HEAP_SIZE 0x00000C00
+#define __HEAP_SIZE 0x00038000
 // </h>
 
 

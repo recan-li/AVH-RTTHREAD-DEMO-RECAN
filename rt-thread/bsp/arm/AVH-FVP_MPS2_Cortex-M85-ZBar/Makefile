@@ -50,4 +50,11 @@ stop:
 	ps -ef | grep -v grep | grep /opt/VHT/bin/models/FVP_MPS2_Cortex-M85 | awk '{print $$2}' | xargs kill -9
 
 objdump:
-	arm-none-eabi-objdump 
+	arm-none-eabi-objdump -l -x -d  $(OUT_PATH)/image.axf > $(OUT_PATH)/image.axf.asm
+
+clean:
+	@echo "Clean ..."
+	rm -rf $(AVH_DEMO_PATH)/Objects/
+	rm -rf $(OUT_PATH)
+
+.PHONY: all source clean build run help

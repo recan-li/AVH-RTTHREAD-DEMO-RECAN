@@ -33,7 +33,6 @@
   <components>
     <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM"/>
     <component Cclass="Device" Cgroup="Startup" Cvariant="C Startup" Cvendor="ARM" Cversion="1.0.0" rtedir="./RTE">
-      <file attr="config" category="linkerScript" name="Device/ARMCM85/Config/ARMCM85_ac6.sct" version="1.0.0"/>
       <file attr="config" category="sourceC" name="Device/ARMCM85/Source/startup_ARMCM85.c" version="1.0.0"/>
       <file attr="config" category="sourceC" name="Device/ARMCM85/Source/system_ARMCM85.c" version="1.0.0"/>
     </component>
@@ -41,7 +40,7 @@
 
   <files>
   
-	<cflags add="-DARM_AVH_UART_PRINTF_ENABLE=1 -DFINSH_ECHO_DISABLE_DEFAULT -Wno-unused-value -save-temps=obj -I ./ -I ./board -I ../../../components/drivers/include -I ../../../components/libc/posix/io/eventfd -I ../../../components/libc/posix/io/poll -I ../../../libcpu/arm/common -I . -I ../../../components/libc/compilers/common/include -I ../../../components/libc/posix/ipc -I board/ports/wifi -I ../../../components/libc/compilers/common/extension/fcntl/octal -I ../../../include -I ../../../components/libc/posix/io/epoll -I ../../../components/drivers/include -I ../../../components/drivers/include -I ../../../components/libc/compilers/common/extension -I board/ports -I ../../../components/finsh -I ../../../libcpu/arm/cortex-m7 -I board -I ../../../components/drivers/include -D__RTTHREAD__ -D__RT_KERNEL_SOURCE__ -D__xSTD_IN_OUT_ERR" compiler="AC6"/>
+	<cflags add="-DARM_AVH_UART_PRINTF_ENABLE=1 -DFINSH_ECHO_DISABLE_DEFAULT -DCFG_AWS_IOT_SOCKET_ENABLE=1 -DCFG_RTT_ZBAR=1 -Wno-unused-value -save-temps=obj -I ./rpc_fs -I ./ -I ./board -I ../../../components/drivers/include -I ../../../components/libc/posix/io/eventfd -I ../../../components/libc/posix/io/poll -I ../../../libcpu/arm/common -I . -I ../../../components/libc/compilers/common/include -I ../../../components/libc/posix/ipc -I board/ports/wifi -I ../../../components/libc/compilers/common/extension/fcntl/octal -I ../../../include -I ../../../components/libc/posix/io/epoll -I ../../../components/drivers/include -I ../../../components/drivers/include -I ../../../components/libc/compilers/common/extension -I board/ports -I ../../../components/finsh -I ../../../libcpu/arm/cortex-m7 -I board -I ../../../components/drivers/include -D__RTTHREAD__ -D__RT_KERNEL_SOURCE__ -D__xSTD_IN_OUT_ERR" compiler="AC6"/>
 
     <group name="Documentation">
       <file category="doc" name="./README.md"/>
@@ -112,18 +111,11 @@
       <cflags add="-I ./zbar/decoder -I ./zbar/qrcode -I ./zbar -I ./" compiler="AC6"/>
 
       <file category="sourceC" name="zbar/decoder/code39.c"/>
-      <file category="sourceC" name="zbar/decoder/code39.h"/>
       <file category="sourceC" name="zbar/decoder/code128.c"/>
-      <file category="sourceC" name="zbar/decoder/code128.h"/>
       <file category="sourceC" name="zbar/decoder/ean.c"/>
-      <file category="sourceC" name="zbar/decoder/ean.h"/>
       <file category="sourceC" name="zbar/decoder/i25.c"/>
-      <file category="sourceC" name="zbar/decoder/i25.h"/>
       <file category="sourceC" name="zbar/decoder/pdf417.c"/>
-      <file category="sourceC" name="zbar/decoder/pdf417.h"/>
-      <file category="sourceC" name="zbar/decoder/pdf417_hash.h"/>
       <file category="sourceC" name="zbar/decoder/qr_finder.c"/>
-      <file category="sourceC" name="zbar/decoder/qr_finder.h"/>
       <file category="sourceC" name="zbar/qrcode/bch15_5.c"/>
       <file category="sourceC" name="zbar/qrcode/binarize.c"/>
       <file category="sourceC" name="zbar/qrcode/isaac.c"/>
@@ -139,8 +131,13 @@
       <file category="sourceC" name="zbar/refcnt.c"/>
       <file category="sourceC" name="zbar/scanner.c"/>
       <file category="sourceC" name="zbar/symbol.c"/>
+      <file category="sourceC" name="application/zbar_main.c"/>
+    </group>
 
-      <file category="sourceC" name="./application/zbar_main.c"/>
+    <group name="rpc_fs">
+      <cflags add="-I ./rpc_fs " compiler="AC6"/>
+      <file category="sourceC" name="rpc_fs/rpc_fs_client.c"/>
+      <file category="sourceC" name="rpc_fs/cJSON.c"/>
     </group>
 
   </files>
