@@ -30,7 +30,7 @@ def avh_rtt_debug_loop():
 			print("Catch exception:", e)
 			return None
 
-	client_socket.settimeout(0.1)
+	client_socket.settimeout(0.5)
 
 	try:
 		print("Conncted debug server ok ...")

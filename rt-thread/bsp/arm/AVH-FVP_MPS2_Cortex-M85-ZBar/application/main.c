@@ -39,7 +39,7 @@ int main (void)
 
     rt_thread_t tid;
 
-    tid = rt_thread_create("zbar", main_thread_entry22, RT_NULL, 8192, RT_MAIN_THREAD_PRIORITY / 2, 100);
+    tid = rt_thread_create("zbar", main_thread_entry22, RT_NULL, 4096, RT_MAIN_THREAD_PRIORITY / 2, 10);
     rt_thread_startup(tid);
 
     extern int avh_rtt_debug_server_main(int argc, const char *argv[]);

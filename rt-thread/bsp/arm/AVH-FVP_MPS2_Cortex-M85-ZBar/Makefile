@@ -42,6 +42,7 @@ run:
 run_finsh:
 	@echo "Running ..."
 	/opt/VHT/bin/FVP_MPS2_Cortex-M85 --stat --simlimit $(AVH_SIMLIMIT_TIME) -f $(AVH_DEMO_PATH)/vht_config.txt $(OUT_PATH)/image.$(TARGET_FILE_SUFFIX) &
+	@python zbar_app/zbar_auth_server.py &
 	@sleep 3
 	@python avh_rtt_debug_client.py debug
 	make stop

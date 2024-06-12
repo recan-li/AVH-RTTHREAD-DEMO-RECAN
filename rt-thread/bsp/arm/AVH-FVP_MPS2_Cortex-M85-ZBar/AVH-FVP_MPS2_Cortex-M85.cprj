@@ -108,7 +108,7 @@
     </group>
 
     <group name="zbar">
-      <cflags add="-I ./zbar/decoder -I ./zbar/qrcode -I ./zbar -I ./" compiler="AC6"/>
+      <cflags add="-I ./zbar/decoder -I ./zbar/qrcode -I ./zbar -I ./ -I ./zbar_app" compiler="AC6"/>
 
       <file category="sourceC" name="zbar/decoder/code39.c"/>
       <file category="sourceC" name="zbar/decoder/code128.c"/>
@@ -131,7 +131,8 @@
       <file category="sourceC" name="zbar/refcnt.c"/>
       <file category="sourceC" name="zbar/scanner.c"/>
       <file category="sourceC" name="zbar/symbol.c"/>
-      <file category="sourceC" name="application/zbar_main.c"/>
+      <file category="sourceC" name="zbar_app/zbar_main.c"/>
+      <file category="sourceC" name="zbar_app/zbar_auth.c"/>
     </group>
 
     <group name="rpc_fs">
