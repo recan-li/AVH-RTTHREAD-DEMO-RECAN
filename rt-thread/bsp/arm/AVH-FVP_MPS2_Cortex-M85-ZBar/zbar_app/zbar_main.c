@@ -130,7 +130,7 @@ int get_qrcode_text(void *raw, int width, int height, char *qrcode, int debug)
         }
     } else {
         if (debug) {
-            printf("zbar ok \n");
+            printf("zbar ok: %s \n", qrcode);
         }
     }
 
@@ -174,8 +174,8 @@ int zbar_main(void)
     char qrcode[64] = {0};
 	printf("Hello ZBAR ...\n");
 
-    zbar_qrcode_get_thread_start("online_ok_test");
-    zbar_qrcode_get_thread_start("online_fail_test");
+    //zbar_qrcode_get_thread_start("online_ok_test");
+    //zbar_qrcode_get_thread_start("online_fail_test");
 
 /*  
     get_qrcode_text((void* )gImage_test0, 240, 240, qrcode);

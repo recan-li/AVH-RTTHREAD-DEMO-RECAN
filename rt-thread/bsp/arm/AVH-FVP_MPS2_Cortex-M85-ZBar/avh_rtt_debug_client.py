@@ -41,18 +41,30 @@ def avh_rtt_debug_loop():
 				if user_input != "":
 					break
 			client_socket.sendall(user_input.encode())
-
+			
 			received_data = b""
-			try:
-				while True:				
-					part_data = client_socket.recv(4096)
-					if part_data is not None:
-						received_data += part_data
+			cnt = 0
+			while  True:
+				try:
+					while True:				
+						part_data = client_socket.recv(4096)
+						if part_data is not None:
+							received_data += part_data
+						else:
+							print("none")
+							break				
+				except socket.timeout:
+					#print(len(received_data))
+					if len(received_data) == 0:
+						cnt = cnt + 1
+						if cnt > 10:
+							break
+						else:
+							continue
 					else:
-						print("none")
-						break				
-			except socket.timeout:
-				print("", end='')
+						break
+						print("", end='')
+
 			print(received_data.decode())
 	
 	except Exception as e:

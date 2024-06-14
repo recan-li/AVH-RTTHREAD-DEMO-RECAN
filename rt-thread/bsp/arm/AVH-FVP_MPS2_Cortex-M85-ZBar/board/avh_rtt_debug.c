@@ -142,7 +142,9 @@ static void client_deal_func(void* arg)
 
         g_client_fd = client_fd;
         serial_out_to_socket_start(cm_socket_putc);
+        //rt_kprintf("finsh-start---\n");
         msh_exec(buf, ret);
+        //rt_kprintf("finsh-stop+++\n");
         serial_out_to_socket_stop();
         
         //break;
@@ -255,7 +257,7 @@ int avh_rtt_debug_server_main(int argc, const char *argv[])
         client_sock = accept(ser_sock, (struct sockaddr*)&socket_in, &len);
 #endif
         if(client_sock < 0) {
-            perror("accept error");
+            printf("accept error");
             ret = -7;
             continue;
         } else {

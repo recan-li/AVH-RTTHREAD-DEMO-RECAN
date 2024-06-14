@@ -7,6 +7,14 @@ SHELL 				:= /bin/bash
 V  					?= 0
 TARGET_FILE_SUFFIX 	:= axf
 
+define KILL_EXE
+	exe=$(1);\
+	pid=`ps -ef | grep -v grep | grep $$exe | awk '{print $$2}'`;\
+	if [ "$$pid" != "" ]; then\
+		kill -9 $$pid;\
+	fi
+endef
+
 all:  clean build run
 
 help:
@@ -41,14 +49,18 @@ run:
 
 run_finsh:
 	@echo "Running ..."
+	@make stop
 	/opt/VHT/bin/FVP_MPS2_Cortex-M85 --stat --simlimit $(AVH_SIMLIMIT_TIME) -f $(AVH_DEMO_PATH)/vht_config.txt $(OUT_PATH)/image.$(TARGET_FILE_SUFFIX) &
 	@python zbar_app/zbar_auth_server.py &
-	@sleep 3
+	@sleep 1
 	@python avh_rtt_debug_client.py debug
-	make stop
+	@make stop
 
 stop:
-	ps -ef | grep -v grep | grep /opt/VHT/bin/models/FVP_MPS2_Cortex-M85 | awk '{print $$2}' | xargs kill -9
+	@$(call KILL_EXE,/opt/VHT/bin/models/FVP_MPS2_Cortex-M85)
+	@$(call KILL_EXE,zbar_auth_server.py)
+#	ps -ef | grep -v grep | grep /opt/VHT/bin/models/FVP_MPS2_Cortex-M85 | awk '{print $$2}' | xargs kill -9
+#	ps -ef | grep -v grep | grep zbar_app/zbar_auth_server.py | awk '{print $$2}' | xargs kill -9
 
 objdump:
 	arm-none-eabi-objdump -l -x -d  $(OUT_PATH)/image.axf > $(OUT_PATH)/image.axf.asm

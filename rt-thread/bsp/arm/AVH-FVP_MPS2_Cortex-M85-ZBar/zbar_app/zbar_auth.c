@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "rtthread.h"
 #include "rtdef.h"
@@ -12,10 +13,13 @@
 #define SERVER_IP       "127.0.0.1"
 #define SERVER_IP_BYTES {0x7F, 0x00, 0x00, 0x01} // sepcial for AVH socket API
 
-#define SERVER_PORT     18888
+#define SERVER_PORT0     18888
+#define SERVER_PORT1     18889
 
 extern const uint8_t gImage_test8[];
 extern const uint8_t gImage_test9[];
+
+static rt_sem_t g_thread_exit_sem = RT_NULL;
 
 // register auth ok qrcode
 static char *g_auth_ok_qrcoe_list[] = 
@@ -44,6 +48,7 @@ int zbar_check_auth_online(char *qrcode)
 	int ret = -1;	
     char buffer[1024];
 
+    //rt_kprintf("qrcode: %s\n", qrcode);
     if ((sock = iotSocketCreate(IOT_SOCKET_AF_INET, IOT_SOCKET_SOCK_STREAM, IOT_SOCKET_IPPROTO_TCP)) < 0) {
     	rt_kprintf("socket fail\n");
     	goto exit_entry;
@@ -51,10 +56,14 @@ int zbar_check_auth_online(char *qrcode)
 
     uint8_t ip_array[] = SERVER_IP_BYTES;
     uint32_t ip_len = sizeof(ip_array);
-    ret = iotSocketConnect (sock, (const uint8_t *)ip_array, ip_len, SERVER_PORT);
+    ret = iotSocketConnect (sock, (const uint8_t *)ip_array, ip_len, SERVER_PORT0);
     if (ret < 0) {
-    	rt_kprintf("connect fail\n");
-    	goto exit_entry;
+    	//rt_kprintf("connect fail\n");
+        ret = iotSocketConnect (sock, (const uint8_t *)ip_array, ip_len, SERVER_PORT1);
+        if (ret < 0) {
+            rt_kprintf("connect fail\n");
+            goto exit_entry;
+        }
     }
 
     //snprintf(buffer, sizeof(buffer), "{\"qrcode\" : \"%s\"}", qrcode);
@@ -67,6 +76,7 @@ int zbar_check_auth_online(char *qrcode)
     	rt_kprintf("send fail\n");
     	goto exit_entry;
     }
+    rt_kprintf(">>> %s\n", json_string);
 
     free(json_string);
     cJSON_Delete(root);
@@ -76,6 +86,7 @@ int zbar_check_auth_online(char *qrcode)
     	rt_kprintf("recv fail\n");
     	goto exit_entry;
     }
+    rt_kprintf("<<< %s\n", buffer);
 
     cJSON * rsp_root = NULL;
     cJSON * result = NULL;
@@ -129,14 +140,20 @@ void zbar_qrcode_get_thread_entry(void *arg)
     } else {
         rt_kprintf("invailed parameter\n");
     }
+    rt_sem_release(g_thread_exit_sem);
 }
 
 void zbar_qrcode_get_thread_start(char *cmd)
 {
     rt_thread_t tid;
 
+    g_thread_exit_sem = rt_sem_create("sem", // 信号量名称
+                        0,     // 信号量初始值
+                        RT_IPC_FLAG_FIFO); // 信号量模式，FIFO或PRIO
     tid = rt_thread_create("zbar_qrcode", zbar_qrcode_get_thread_entry, cmd, 4096, RT_MAIN_THREAD_PRIORITY / 2, 10);
     rt_thread_startup(tid);
+    rt_sem_take(g_thread_exit_sem, RT_WAITING_FOREVER);
+    g_thread_exit_sem = RT_NULL;
 }
 
 int zbar_qrcode_auth(int argc, char** argv)
