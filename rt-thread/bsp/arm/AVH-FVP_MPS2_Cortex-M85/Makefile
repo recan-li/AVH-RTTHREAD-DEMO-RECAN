@@ -11,7 +11,6 @@ all:  clean build run
 
 help:
 	@echo "make help 	-> Show this help msg."
-	@echo "make source 	-> Install env parameters."
 	@echo "make build 	-> Build thie demo."
 	@echo "make clean 	-> Clean object files."
 	@echo "make run 	-> Run this demo."
@@ -20,14 +19,6 @@ help:
 	@echo "make stop    -> Stop to run this demo."
 
 debug: build run stop
-
-source:
-	@echo "Copy and source .bashrc ..."
-	@cp -rf .bashrc ~/.bashrc
-	@source ~/.bashrc
-	@echo "Copy CMSIS-Build-Utils.cmake ..."
-	@sudo cp -rf cmake/CMSIS-Build-Utils.cmake /opt/ctools/etc/CMSIS-Build-Utils.cmake
-	@echo "All parameters have been installed."
 
 build:
 	@echo "Building ..."
