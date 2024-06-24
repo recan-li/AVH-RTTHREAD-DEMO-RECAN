@@ -6,7 +6,7 @@ import os
 import shutil
 import binascii
 
-debug_mode = True
+debug_mode = False
 
 tcp_mode = False
 
@@ -31,6 +31,7 @@ if tcp_mode:
     serverSock.bind(server_address)
 else:
     # 绑定socket到指定的IP地址和端口号
+    print(f"Starting up on " + SERVER_IP_ADDRESS + " port " + str(UDP_PORT_NO))
     serverSock.bind((SERVER_IP_ADDRESS, UDP_PORT_NO))
 
 file_fd = None

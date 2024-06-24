@@ -1,1 +1,1 @@
-gcc -o test ./base64.c ./ai_bridge_client.c ../rpc_fs/rpc_fs_client.c ../rpc_fs/cJSON.c -I../rpc_fs -lm -DAI_MAIN
+gcc -o test ./base64.c ./ai_bridge_client.c ../rpc_fs/rpc_fs_client.c ../rpc_fs/cJSON.c -I../rpc_fs -lm -DAI_MAIN -DDEBUG_MODE=0

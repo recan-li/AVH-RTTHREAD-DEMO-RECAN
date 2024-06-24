@@ -108,10 +108,9 @@
     </group>
 
     <group name="ai">
-      <cflags add="-I ./zbar/decoder -I ./zbar/qrcode -I ./zbar -I ./ -I ./zbar_app" compiler="AC6"/>
-
-      <file category="sourceC" name="zbar/decoder/code39.c"/>
-      
+      <cflags add="-I ./ai -I ./" compiler="AC6"/>
+      <file category="sourceC" name="ai/base64.c"/>
+      <file category="sourceC" name="ai/ai_bridge_client.c"/>      
     </group>
 
     <group name="rpc_fs">

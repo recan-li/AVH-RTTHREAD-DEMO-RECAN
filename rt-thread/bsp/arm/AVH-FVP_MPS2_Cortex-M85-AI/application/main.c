@@ -19,13 +19,17 @@
 #include <stdio.h>
 #include <rtthread.h>
 
-extern int zbar_main(void);
+extern int ai_bridge_main(int argc, const char *argv[]);
 extern int rpc_fs_main(int argc, const char *argv[]);
 
 void main_thread_entry22(void *arg)
 {
-    //rpc_fs_main(0, NULL);
-    zbar_main();
+    //rpc_fs_main(1, NULL);
+    const char *argv[] = {
+        "ai",
+        "./ai/test1.raw",
+    };
+    ai_bridge_main(2, argv);
 
     while (1) {
         //printf("22222 %s:%d\n", __func__, __LINE__);
@@ -39,7 +43,7 @@ int main (void)
 
     rt_thread_t tid;
 
-    tid = rt_thread_create("zbar", main_thread_entry22, RT_NULL, 4096, RT_MAIN_THREAD_PRIORITY / 2, 10);
+    tid = rt_thread_create("ai", main_thread_entry22, RT_NULL, 4096, RT_MAIN_THREAD_PRIORITY / 2, 10);
     rt_thread_startup(tid);
 
     extern int avh_rtt_debug_server_main(int argc, const char *argv[]);

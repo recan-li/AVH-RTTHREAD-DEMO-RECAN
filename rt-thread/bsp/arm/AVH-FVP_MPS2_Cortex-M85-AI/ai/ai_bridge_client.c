@@ -24,6 +24,7 @@
 #include <arpa/inet.h>
 #endif
 
+#define DEBUG_MODE      1
 #define TCP_MODE        0
 
 #define SERVER_IP       "127.0.0.1"
@@ -35,10 +36,18 @@
 #define SERVER_PORT     55558
 #endif
 
-#define MAX_READ_BLOCK_SIZE             (12 * 128)
+#ifdef __RTTHREAD__
+#include <rtthread.h>
+#define MAX_READ_BLOCK_SIZE             (24 * 1024)
+#define MAX_SEND_BLOCK_LEN              (20 * 1024)
+#else
+// maybe itn't the best !!!
+#define MAX_READ_BLOCK_SIZE             (24 * 1024)
+#define MAX_SEND_BLOCK_LEN              (40 * 1024)
+#endif
+
 #define BASE64_LEN(len)                 ((len + 2 ) / 3 * 4)
 #define MAX_READ_BLOCK_BASE64_SIZE      BASE64_LEN(MAX_READ_BLOCK_SIZE)
-#define MAX_SEND_BLOCK_LEN              (10 * 1024)
 
 static int g_sock = -1;
 static int g_fd = 1;
@@ -102,6 +111,8 @@ int log_hexdump2(const char *title, const unsigned char *data, int len)
         printf("%02X", data[i]);
     }
     printf("\n");
+
+    return 0;
 }
 
 int ai_bridge_init(void)
@@ -124,7 +135,7 @@ int ai_bridge_init(void)
     g_serv_addr.sin_family = AF_INET;
     g_serv_addr.sin_port = htons(SERVER_PORT);
     g_serv_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
-    printf("%s:%d\n", SERVER_IP, SERVER_PORT);
+    //printf("%s:%d\n", SERVER_IP, SERVER_PORT);
 #endif
 
 #if (TCP_MODE)
@@ -142,7 +153,7 @@ int ai_bridge_init(void)
 #endif
 #endif
 
-    printf("g_sock: %d\n", g_sock);
+    //printf("g_sock: %d\n", g_sock);
     return g_sock;
 }
 
@@ -152,11 +163,12 @@ int ai_bridge_deinit(void)
     return 0;
 }
 
-cJSON *ai_bridge_cJSON_exhcange(cJSON *in)
+static cJSON *ai_bridge_cJSON_exhcange(cJSON *in)
 {
-    printf("%s:%d %d %d\n", __func__, __LINE__, 0, SERVER_PORT);
+    //printf("%s:%d %d %d\n", __func__, __LINE__, 0, SERVER_PORT);
     char *json_string = cJSON_Print(in);
     if (json_string) {
+#if (DEBUG_MODE)
         if (strlen(json_string) <= 2048) {
             printf(">>> %s\n", json_string);
         } else {
@@ -164,6 +176,7 @@ cJSON *ai_bridge_cJSON_exhcange(cJSON *in)
             memcpy(tmp, json_string, sizeof(tmp) - 1);
             printf("tmp: %s\n", tmp);
         }
+#endif
 #if (CFG_AWS_IOT_SOCKET_ENABLE)
         //printf("%s:%d %d\n", __func__, __LINE__, g_sock);
         //extern int32_t iotSocketSendTo (int32_t socket, const void *buf, \
@@ -177,7 +190,7 @@ cJSON *ai_bridge_cJSON_exhcange(cJSON *in)
         int ret = iotSocketSendTo (g_sock, json_string, strlen(json_string), \
             (const uint8_t *)ip_array, ip_len, SERVER_PORT);
 #endif
-        printf("%s:%d %d %d\n", __func__, __LINE__, ret, SERVER_PORT);
+        //printf("%s:%d %d %d\n", __func__, __LINE__, ret, SERVER_PORT);
 
 #else
 #if (TCP_MODE)
@@ -189,7 +202,7 @@ cJSON *ai_bridge_cJSON_exhcange(cJSON *in)
 #endif
         free(json_string);
 
-        printf("%s:%d %d %d %d\n", __func__, __LINE__, 0, SERVER_PORT, g_sock);
+        //printf("%s:%d %d %d %d\n", __func__, __LINE__, 0, SERVER_PORT, g_sock);
     }
     
     // 释放 cJSON 对象
@@ -212,7 +225,10 @@ cJSON *ai_bridge_cJSON_exhcange(cJSON *in)
     int ret = recvfrom(g_sock, buffer, sizeof(buffer), 0, NULL, NULL);
 #endif
 #endif
+
+#if (DEBUG_MODE)
     printf("<<< %s\n", buffer);
+#endif
 
     if (ret < 0) {
         return NULL;
@@ -223,6 +239,11 @@ cJSON *ai_bridge_cJSON_exhcange(cJSON *in)
     RPC_FILE *file = NULL;
 
     rsp_root = cJSON_Parse(buffer);
+    if (!rsp_root) {
+        printf("error null rsp\n");
+        return NULL;
+    }
+
     status = cJSON_GetObjectItem(rsp_root, "status");
 
     if (strcmp(status->valuestring, "ok")) {
@@ -234,7 +255,7 @@ cJSON *ai_bridge_cJSON_exhcange(cJSON *in)
     return rsp_root;
 }
 
-int ai_bridge_baidu_stt(const char *audio_file, char *speech_text)
+int ai_bridge_baidu_stt(const char *audio_file, char *speech_in, char *speech_out)
 {
     int i;
     int ret;
@@ -246,7 +267,7 @@ int ai_bridge_baidu_stt(const char *audio_file, char *speech_text)
 
     int size = rpc_fs_fsize(audio_file);
     int base64_len = BASE64_LEN(size);
-    printf("size: %d %d\n", size, base64_len);
+    //printf("size: %d %d\n", size, base64_len);
 
     buffer = (char *)malloc(base64_len + 1);
     p = buffer;
@@ -258,28 +279,28 @@ int ai_bridge_baidu_stt(const char *audio_file, char *speech_text)
 
     for (i = 0; i < cnt; i++) {
         ret = rpc_fs_fread(p, 1, MAX_READ_BLOCK_SIZE, file);
-        printf("ret: %d\n", ret);
+        //printf("ret: %d\n", ret);
         if (i == 0) {
-            log_hexdump("frist", p, MAX_READ_BLOCK_SIZE);
-            log_hexdump2("frist", p, MAX_READ_BLOCK_SIZE);
+            //log_hexdump("frist", p, MAX_READ_BLOCK_SIZE);
+            //log_hexdump2("frist", p, MAX_READ_BLOCK_SIZE);
         }
         base64_encode_tail((const uint8_t *)p, MAX_READ_BLOCK_SIZE, p);
         if (i == 0) {
-            printf("p: (%d)%s\n", (int)strlen(p), p);;
+            //printf("p: (%d)%s\n", (int)strlen(p), p);;
         }
         p += MAX_READ_BLOCK_BASE64_SIZE;
     }
 
     if (left != 0) {
         ret = rpc_fs_fread(p, 1, left, file);
-        printf("ret: %d %d\n", ret, left);
+        //printf("ret: %d %d\n", ret, left);
         base64_encode_tail((const uint8_t *)p, left, p);
-        printf("p: (%d)%s\n", (int)strlen(p), p);
+        //printf("p: (%d)%s\n", (int)strlen(p), p);
         p += BASE64_LEN(left);
         *p = '\0'; 
     }
 
-    printf("len: %d\n", (int)strlen(buffer));
+    //printf("len: %d\n", (int)strlen(buffer));
 
     rpc_fs_fclose(file);
 
@@ -297,7 +318,7 @@ int ai_bridge_baidu_stt(const char *audio_file, char *speech_text)
 
     cnt = total_len / MAX_SEND_BLOCK_LEN;
     left = total_len % MAX_SEND_BLOCK_LEN;
-    printf("%d %d %d\n", total_len, cnt, left);
+    //printf("%d %d %d\n", total_len, cnt, left);
 
     if (left != 0) {
         max_part = cnt + 1;
@@ -339,24 +360,38 @@ int ai_bridge_baidu_stt(const char *audio_file, char *speech_text)
         *(p + left) = c_bak;
         p += left;
         
+        rt_kprintf("%s:%d ...\n", __func__, __LINE__);
         rsp_root = ai_bridge_cJSON_exhcange(root);
     } 
 
+    rt_kprintf("%s:%d ...\n", __func__, __LINE__);
+
     if (rsp_root) {
-        cJSON *text_obj = cJSON_GetObjectItem(rsp_root, "text");
-        if (text_obj) {
-            printf("text: %s\n", text_obj->valuestring);
-            strcpy(speech_text, text_obj->valuestring);
+        cJSON *text_req_obj = cJSON_GetObjectItem(rsp_root, "text_req");
+        if (text_req_obj) {
+            printf("text req: %s\n", text_req_obj->valuestring);
+            strcpy(speech_in, text_req_obj->valuestring);
+            ret = 0;
+        }
+        cJSON *text_rsp_obj = cJSON_GetObjectItem(rsp_root, "text_rsp");
+        if (text_req_obj) {
+            printf("text rsp: %s\n", text_rsp_obj->valuestring);
+            strcpy(speech_out, text_rsp_obj->valuestring);
             ret = 0;
         }        
+        rt_kprintf("%s:%d ...\n", __func__, __LINE__);
         cJSON_Delete(rsp_root);
     } else {
         ret = -1;
     }
 
+    rt_kprintf("%s:%d ...\n", __func__, __LINE__);
+
     ai_bridge_deinit();
 
     free(buffer); 
+
+    rt_kprintf("%s:%d ...\n", __func__, __LINE__);
 
     return ret;
 }
@@ -366,15 +401,24 @@ int ai_bridge_main(int argc, const char *argv[])
 #else
 int main(int argc, const char *argv[])
 #endif
-{    
-    char text[128] = {0};
+{   
+    char text_in[128] = {0}; 
+    char text_out[2048] = {0};
     const char *file_name = "123.txt";
+
+    printf("%s:%d ...\n", __func__, __LINE__);
+    rt_kprintf("%s:%d ...\n", __func__, __LINE__);
 
     if (argc > 1) {
         file_name = argv[1];
     }
 
-    ai_bridge_baidu_stt(file_name, text);
+    ai_bridge_baidu_stt(file_name, text_in, text_out);
+
+#ifdef __RTTHREAD__
+    rt_kprintf(">>> %s\n", text_in);
+    rt_kprintf("<<< %s\n", text_out);
+#endif
 
     return 0;
 }

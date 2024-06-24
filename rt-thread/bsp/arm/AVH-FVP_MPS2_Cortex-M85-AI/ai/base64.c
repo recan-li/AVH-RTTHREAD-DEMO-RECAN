@@ -89,12 +89,11 @@ int base64_encode_tail(const uint8_t *in, uint16_t in_len, char *out)
         return BASE64_ERROR;
     }
 
-
     cnt = in_len / 3;
     left = in_len % 3;
     p_src = (uint8_t *)in + in_len;
-    p_dst = out + out_len;
-    printf("in %d out %d %d %d\n", in_len, out_len, cnt, left);
+    p_dst = (uint8_t *)out + out_len;
+    //printf("in %d out %d %d %d\n", in_len, out_len, cnt, left);
 
     if (left == 2) {
         tmp = *(p_src - 2);

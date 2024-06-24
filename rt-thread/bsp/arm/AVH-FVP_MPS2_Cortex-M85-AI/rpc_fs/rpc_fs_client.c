@@ -76,7 +76,7 @@ int rpc_fs_init(void)
     }
 #endif
 #endif
-    printf("g_sock1: %d\n", g_sock);
+    //printf("g_sock1: %d\n", g_sock);
     return g_sock;
 }
 
@@ -90,9 +90,11 @@ cJSON *rpc_fs_cJSON_exhcange(cJSON *in, int exp_len)
 {
     char *json_string = cJSON_Print(in);
     if (json_string) {
+#if (DEBUG_MODE)
         if (strlen(json_string) <= 2048) {
             printf(">>> %s\n", json_string);
         }
+#endif
 #if (CFG_AWS_IOT_SOCKET_ENABLE)
         //printf("%s:%d %d\n", __func__, __LINE__, g_sock);
         //extern int32_t iotSocketSendTo (int32_t socket, const void *buf, \
@@ -147,10 +149,12 @@ cJSON *rpc_fs_cJSON_exhcange(cJSON *in, int exp_len)
     int ret = recvfrom(g_sock, p_buffer, recv_size, 0, NULL, NULL);
 #endif
 #endif
-    printf("ret: %d %d\n", ret, recv_size);
+#if (DEBUG_MODE)
+    //printf("ret: %d %d\n", ret, recv_size);
     if (p_buffer == buffer) {
         printf("<<< %s\n", p_buffer);
     }
+#endif
 
     cJSON * rsp_ret = NULL;
 

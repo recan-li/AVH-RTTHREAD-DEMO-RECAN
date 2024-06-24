@@ -41,15 +41,16 @@ def speech_decode_by_pcm_online(audio_data_base64, audio_file_size):
     response = requests.request("POST", url, headers=headers, data=payload)    
     result = response.json()
 
-    print(response.text)
-    print(result['result'][0])
+    if debug_mode:
+        #print(response.text)
+        print(result['result'][0])
 
     return result['result'][0]
  
 def speech_decode_by_file_online(audio_file):
     # 读取语音文件并转换为base64格式
-    with open(audio_file, 'rb') as f:
-        audio_data_base64 = base64.b64encode(f.read()).decode()
+    #with open(audio_file, 'rb') as f:
+    #    audio_data_base64 = base64.b64encode(f.read()).decode()
 
     with open('1.txt', 'w') as f:
         f.write(audio_data_base64)
@@ -82,6 +83,40 @@ def get_access_token():
 #    speech_decode_by_file_online('./test.wav')
 #    speech_decode_by_file_online('./test1.raw')
 
+import openai
+import json
+import requests
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="sk-52OQjRvWkkJrSor3V4W3ZeVLz6ArQyHED1RP4xiBS2KF5mdA",
+    base_url="https://api.moonshot.cn/v1",
+)
+
+def ai_get_answer_from_kimi(message):
+    try:
+        #print('connecting to kimi ...')
+        completion = client.chat.completions.create(
+            model="moonshot-v1-8k",
+            messages=[
+                {
+                    "role": "user",
+                    "content": message
+                },
+            ],
+            temperature=0.3,
+        )
+         
+        answer = completion.choices[0].message.content
+        if debug_mode:
+            print("*" * 30)
+            print(answer)
+        return answer
+    except Exception as e:
+        print(e)
+        return "Error response now !"
+
+##############################################################33
 
 debug_mode = True
 
@@ -156,19 +191,20 @@ while True:
             cur_part = parsed_data["cur_part"]
             max_part = parsed_data["max_part"]
             if cur_part == 1:
+                # clear base64 data
                 base64_data = ""
             if cur_part != max_part:
                 base64_data += parsed_data["base64"]
+                rsp_content = "{\"status\": \"ok\"}"
             elif cur_part == max_part:
                 base64_data += parsed_data["base64"]
                 file_len = parsed_data["file_len"]
-                speech_decode_by_file_online('./test.wav')
-                with open('2.txt', 'w') as f:
-                    f.write(base64_data)
-                speech_decode_by_pcm_online(base64_data, file_len)
-
-            rsp_content = "{\"status\": \"ok\"}"
-                
+                #speech_decode_by_file_online('./test.wav')
+                #with open('2.txt', 'w') as f:
+                #    f.write(base64_data)
+                text_result = speech_decode_by_pcm_online(base64_data, file_len)
+                text_answer = ai_get_answer_from_kimi(text_result)
+                rsp_content = "{\"status\": \"ok\", \"text_req\": \"" + text_result + "\", \"text_rsp\": \"" + text_answer + "\"}"
         else:
             rsp_content = "{\"status\": \"unknown operation\"}"
 
