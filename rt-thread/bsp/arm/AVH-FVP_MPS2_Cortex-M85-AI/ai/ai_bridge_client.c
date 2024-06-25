@@ -24,7 +24,9 @@
 #include <arpa/inet.h>
 #endif
 
-#define DEBUG_MODE      1
+#ifndef DEBUG_MODE
+#define DEBUG_MODE      0
+#endif
 #define TCP_MODE        0
 
 #define SERVER_IP       "127.0.0.1"
@@ -38,9 +40,15 @@
 
 #ifdef __RTTHREAD__
 #include <rtthread.h>
-#define MAX_READ_BLOCK_SIZE             (24 * 1024)
-#define MAX_SEND_BLOCK_LEN              (20 * 1024)
+#define MAX_READ_BLOCK_SIZE             (12 * 768)
+#define MAX_SEND_BLOCK_LEN              (10 * 1024)
+
+extern int cmd_free(int argc, char **argv);
+#define malloc(n)                       rt_malloc(n)
+#define free(p)                         rt_free(p)
+#define cmd_free(argc, argv) 
 #else
+#define cmd_free(argc, argv)            
 // maybe itn't the best !!!
 #define MAX_READ_BLOCK_SIZE             (24 * 1024)
 #define MAX_SEND_BLOCK_LEN              (40 * 1024)
@@ -115,8 +123,14 @@ int log_hexdump2(const char *title, const unsigned char *data, int len)
     return 0;
 }
 
+static int g_ai_bridge_inited = 0;
+
 int ai_bridge_init(void)
 {
+    if (g_ai_bridge_inited) {
+        return 0;
+    }
+
 #if (CFG_AWS_IOT_SOCKET_ENABLE)
 #if (TCP_MODE)
     if ((g_sock = iotSocketCreate(AF_INET, IOT_SOCKET_SOCK_STREAM, IOT_SOCKET_IPPROTO_TCP)) < 0) {
@@ -153,6 +167,8 @@ int ai_bridge_init(void)
 #endif
 #endif
 
+    g_ai_bridge_inited = 1;
+
     //printf("g_sock: %d\n", g_sock);
     return g_sock;
 }
@@ -160,6 +176,8 @@ int ai_bridge_init(void)
 int ai_bridge_deinit(void)
 {
     close(g_sock);
+    g_sock = -1;
+    g_ai_bridge_inited = 0;
     return 0;
 }
 
@@ -208,9 +226,9 @@ static cJSON *ai_bridge_cJSON_exhcange(cJSON *in)
     // 释放 cJSON 对象
     cJSON_Delete(in);
 
-    char buffer[1024] = {0};
+    char buffer[2048] = {0};
 #if (CFG_AWS_IOT_SOCKET_ENABLE)
-    uint8_t ip_recv[64];
+    uint8_t ip_recv[64] = {0};
     uint16_t port = 0;
     uint32_t ip_len = sizeof(ip_recv);
 #if (TCP_MODE)
@@ -252,10 +270,11 @@ static cJSON *ai_bridge_cJSON_exhcange(cJSON *in)
         return NULL;
     } 
 
+    cmd_free(0, NULL);
     return rsp_root;
 }
 
-int ai_bridge_baidu_stt(const char *audio_file, char *speech_in, char *speech_out)
+int ai_bridge_baidu_stt(const char *audio_file, char *speech_rsp)
 {
     int i;
     int ret;
@@ -263,13 +282,126 @@ int ai_bridge_baidu_stt(const char *audio_file, char *speech_in, char *speech_ou
     char *p = NULL;
     RPC_FILE *file = NULL;
 
+    // send many times MAX_SEND_BLOCK_LEN
+    int max_part = 0;
+    cJSON *root = NULL;
+    cJSON *rsp_root = NULL;
+
+    ai_bridge_init();
     rpc_fs_init();
 
     int size = rpc_fs_fsize(audio_file);
     int base64_len = BASE64_LEN(size);
+
+    buffer = (char *)malloc(MAX_READ_BLOCK_BASE64_SIZE + 1);
+    if (!buffer) {
+        printf("null pointer, no enough memory !\n");
+        return -1;
+    }
     //printf("size: %d %d\n", size, base64_len);
+    p = buffer;
+
+    int cnt = size / MAX_READ_BLOCK_SIZE;
+    int left = size % MAX_READ_BLOCK_SIZE;
+
+    if (left != 0) {
+        max_part = cnt + 1;
+    } else {
+        max_part = cnt;
+    }
+
+#if (DEBUG_MODE)
+    printf("size: %d %d %d %d %d %d\n", size, base64_len, MAX_READ_BLOCK_SIZE, left, cnt, max_part);
+#endif
+
+    file = rpc_fs_fopen(audio_file, "rb+");
+
+    for (i = 0; i < cnt; i++) {
+        ret = rpc_fs_fread(p, 1, MAX_READ_BLOCK_SIZE, file);
+        cmd_free(0, NULL);
+        if (i == 0) {
+            //log_hexdump("frist", p, MAX_READ_BLOCK_SIZE);
+            //log_hexdump2("frist", p, MAX_READ_BLOCK_SIZE);
+        }
+        base64_encode_tail((const uint8_t *)p, MAX_READ_BLOCK_SIZE, p);
+        if (i == 0) {
+            //printf("p: (%d)%s\n", (int)strlen(p), p);;
+        }
+        *(p + BASE64_LEN(MAX_READ_BLOCK_SIZE)) = '\0';
+
+        root = cJSON_CreateObject();
+    
+        cJSON_AddItemToObject(root, "operation", cJSON_CreateString("baidu_stt"));
+        cJSON_AddItemToObject(root, "cur_part", cJSON_CreateNumber(i + 1));
+        cJSON_AddItemToObject(root, "max_part", cJSON_CreateNumber(max_part));
+        cJSON_AddItemToObject(root, "file_len", cJSON_CreateNumber(size));
+        cJSON_AddItemToObject(root, "cur_len", cJSON_CreateNumber((int)strlen((char *)p)));
+        cJSON_AddItemToObject(root, "base64", cJSON_CreateString((char *)p));
+
+        rsp_root = ai_bridge_cJSON_exhcange(root);
+
+        if (i + 1 != max_part) {
+            cJSON_Delete(rsp_root);
+        }
+    }
+
+    if (left != 0) {
+        ret = rpc_fs_fread(p, 1, left, file);
+        //printf("ret: %d %d\n", ret, left);
+        base64_encode_tail((const uint8_t *)p, left, p);
+        //printf("p: (%d)%s\n", (int)strlen(p), p);
+        *(p + BASE64_LEN(left)) = '\0';
+        root = cJSON_CreateObject();
+        cJSON_AddItemToObject(root, "operation", cJSON_CreateString("baidu_stt"));
+        cJSON_AddItemToObject(root, "cur_part", cJSON_CreateNumber(i + 1));
+        cJSON_AddItemToObject(root, "max_part", cJSON_CreateNumber(max_part));
+        cJSON_AddItemToObject(root, "file_len", cJSON_CreateNumber(size));
+        cJSON_AddItemToObject(root, "cur_len", cJSON_CreateNumber((int)strlen((char *)p)));
+        cJSON_AddItemToObject(root, "base64", cJSON_CreateString((char *)p));
+        rsp_root = ai_bridge_cJSON_exhcange(root);
+    }
+
+    if (rsp_root) {
+        cJSON *speech_rsp_obj = cJSON_GetObjectItem(rsp_root, "speech_rsp");
+        if (speech_rsp_obj) {
+            printf("text req: %s\n", speech_rsp_obj->valuestring);
+            strcpy(speech_rsp, speech_rsp_obj->valuestring);
+            ret = 0;
+        }
+        cJSON_Delete(rsp_root);
+    } else {
+        ret = -1;
+    }
+
+    free(buffer);
+
+    rpc_fs_fclose(file);
+
+    rpc_fs_deinit();
+
+    ai_bridge_deinit();
+
+    return ret;
+}
+
+int ai_bridge_baidu_stt_normal(const char *audio_file, char *speech_rsp)
+{
+    int i;
+    int ret;
+    char *buffer = NULL;
+    char *p = NULL;
+    RPC_FILE *file = NULL;
+    rpc_fs_init();
+
+    int size = rpc_fs_fsize(audio_file);
+    int base64_len = BASE64_LEN(size);
 
     buffer = (char *)malloc(base64_len + 1);
+    if (!buffer) {
+        printf("null pointer, no enough memory !\n");
+        return -1;
+    }
+    //printf("size: %d %d\n", size, base64_len);
     p = buffer;
 
     int cnt = size / MAX_READ_BLOCK_SIZE;
@@ -279,7 +411,7 @@ int ai_bridge_baidu_stt(const char *audio_file, char *speech_in, char *speech_ou
 
     for (i = 0; i < cnt; i++) {
         ret = rpc_fs_fread(p, 1, MAX_READ_BLOCK_SIZE, file);
-        //printf("ret: %d\n", ret);
+        cmd_free(0, NULL);
         if (i == 0) {
             //log_hexdump("frist", p, MAX_READ_BLOCK_SIZE);
             //log_hexdump2("frist", p, MAX_READ_BLOCK_SIZE);
@@ -350,8 +482,9 @@ int ai_bridge_baidu_stt(const char *audio_file, char *speech_in, char *speech_ou
     if (left != 0) {
         char c_bak = *(p + left);
         *(p + left) = '\0';
+
         root = cJSON_CreateObject();
-    
+
         cJSON_AddItemToObject(root, "operation", cJSON_CreateString("baidu_stt"));
         cJSON_AddItemToObject(root, "cur_part", cJSON_CreateNumber(i + 1));
         cJSON_AddItemToObject(root, "max_part", cJSON_CreateNumber(max_part));
@@ -359,39 +492,88 @@ int ai_bridge_baidu_stt(const char *audio_file, char *speech_in, char *speech_ou
         cJSON_AddItemToObject(root, "base64", cJSON_CreateString((char *)p));
         *(p + left) = c_bak;
         p += left;
+        free(buffer); 
         
-        rt_kprintf("%s:%d ...\n", __func__, __LINE__);
         rsp_root = ai_bridge_cJSON_exhcange(root);
-    } 
-
-    rt_kprintf("%s:%d ...\n", __func__, __LINE__);
+    } else {
+        free(buffer); 
+    }
 
     if (rsp_root) {
-        cJSON *text_req_obj = cJSON_GetObjectItem(rsp_root, "text_req");
-        if (text_req_obj) {
-            printf("text req: %s\n", text_req_obj->valuestring);
-            strcpy(speech_in, text_req_obj->valuestring);
+        cJSON *speech_rsp_obj = cJSON_GetObjectItem(rsp_root, "speech_rsp");
+        if (speech_rsp_obj) {
+            printf("text req: %s\n", speech_rsp_obj->valuestring);
+            strcpy(speech_rsp, speech_rsp_obj->valuestring);
             ret = 0;
         }
-        cJSON *text_rsp_obj = cJSON_GetObjectItem(rsp_root, "text_rsp");
-        if (text_req_obj) {
-            printf("text rsp: %s\n", text_rsp_obj->valuestring);
-            strcpy(speech_out, text_rsp_obj->valuestring);
-            ret = 0;
-        }        
-        rt_kprintf("%s:%d ...\n", __func__, __LINE__);
         cJSON_Delete(rsp_root);
     } else {
         ret = -1;
     }
 
-    rt_kprintf("%s:%d ...\n", __func__, __LINE__);
+    ai_bridge_deinit();
+
+    return ret;
+}
+
+int ai_bridge_baidu_tts(char *text_req, const char *audio_file, char *speech_url)
+{
+    cJSON *root = NULL;
+    cJSON *rsp_root = NULL;
+    int ret = -1;
+
+    root = cJSON_CreateObject();
+    
+    cJSON_AddItemToObject(root, "operation", cJSON_CreateString("baidu_tts"));
+    cJSON_AddItemToObject(root, "text_req", cJSON_CreateString(text_req));
+    cJSON_AddItemToObject(root, "audio_file", cJSON_CreateString(audio_file));
+    
+    ai_bridge_init();
+
+    rsp_root = ai_bridge_cJSON_exhcange(root);
+
+    if (rsp_root) {
+        cJSON *speech_url_obj = cJSON_GetObjectItem(rsp_root, "speech_url");
+        if (speech_url_obj) {
+            printf("speech online url: %s\n", speech_url_obj->valuestring);
+            printf("speech local mp3 file: %s\n", audio_file);
+            strcpy(speech_url, speech_url_obj->valuestring);
+            ret = 0;
+        }
+        cJSON_Delete(rsp_root);
+    }
 
     ai_bridge_deinit();
 
-    free(buffer); 
+    return ret;
+}
 
-    rt_kprintf("%s:%d ...\n", __func__, __LINE__);
+int ai_bridge_kimi_ai(char *text_req, char *text_rsp)
+{
+    cJSON *root = NULL;
+    cJSON *rsp_root = NULL;
+    int ret = -1;
+
+    root = cJSON_CreateObject();
+    
+    cJSON_AddItemToObject(root, "operation", cJSON_CreateString("kimi_ai"));
+    cJSON_AddItemToObject(root, "text_req", cJSON_CreateString(text_req));
+    
+    ai_bridge_init();
+
+    rsp_root = ai_bridge_cJSON_exhcange(root);
+
+    if (rsp_root) {
+        cJSON *text_rsp_obj = cJSON_GetObjectItem(rsp_root, "text_rsp");
+        if (text_rsp_obj) {
+            printf("text rsp: %s\n", text_rsp_obj->valuestring);
+            strcpy(text_rsp, text_rsp_obj->valuestring);
+            ret = 0;
+        }
+        cJSON_Delete(rsp_root);
+    }
+
+    ai_bridge_deinit();
 
     return ret;
 }
@@ -402,23 +584,85 @@ int ai_bridge_main(int argc, const char *argv[])
 int main(int argc, const char *argv[])
 #endif
 {   
-    char text_in[128] = {0}; 
-    char text_out[2048] = {0};
-    const char *file_name = "123.txt";
+    char speech_rsp[1024] = {0}; 
+    char ai_text_rsp[2048] = {0};
+    char speech_url[1024] = {0};
+    const char *audio_file_in = "123.txt";
+    const char *audio_file_out = "456.txt";
 
-    printf("%s:%d ...\n", __func__, __LINE__);
-    rt_kprintf("%s:%d ...\n", __func__, __LINE__);
-
-    if (argc > 1) {
-        file_name = argv[1];
+    if (argc > 2) {
+        audio_file_in = argv[1];
+        audio_file_out = argv[2];
+    } else {
+        printf("error input\n");
+        return -1;
     }
 
-    ai_bridge_baidu_stt(file_name, text_in, text_out);
+    printf("\n");
+    printf("baidu AI STT (audio file: %s) ... please wait ...\n", audio_file_in);
+    ai_bridge_baidu_stt(audio_file_in, speech_rsp);
+    printf("\n");
 
-#ifdef __RTTHREAD__
-    rt_kprintf(">>> %s\n", text_in);
-    rt_kprintf("<<< %s\n", text_out);
-#endif
+    printf("kimi AI LLM AIGC ... please wait ...\n");
+    ai_bridge_kimi_ai(speech_rsp, ai_text_rsp);
+    printf("\n");
+
+    printf("baidu AI TTS ... please wait ...\n");
+    ai_bridge_baidu_tts(ai_text_rsp, audio_file_out, speech_url);
+    printf("\n");
+
+    //ai_bridge_baidu_stt(audio_file_out, speech_rsp);
+
+    printf("exit this demo application by [CTRL + C] !!!\n");
 
     return 0;
 }
+
+#ifdef __RTTHREAD__
+
+static void ai_tell_me_a_joke_thread(void *arg)
+{    
+    static const char *argv_in[] = {
+        "ai",
+        "./ai/test3.raw",
+        "./ai/test3-1.mp3",
+    };
+
+    ai_bridge_main(3, argv_in);   
+}
+
+int ai_tell_me_a_joke(int argc, char** argv)
+{
+    
+    rt_thread_t tid;
+
+    tid = rt_thread_create("ai+1", ai_tell_me_a_joke_thread, NULL, 8192, RT_MAIN_THREAD_PRIORITY / 2, 10);
+    rt_thread_startup(tid);
+
+    return 0;
+}
+MSH_CMD_EXPORT(ai_tell_me_a_joke, tell me a joke from kimi AI);
+
+static void ai_tell_me_a_story_thread(void *arg)
+{    
+    static const char *argv_in[] = {
+        "ai",
+        "./ai/test2.raw",
+        "./ai/test2-1.mp3",
+    };
+
+    ai_bridge_main(3, argv_in);   
+}
+
+int ai_tell_me_a_story(int argc, char** argv)
+{
+    rt_thread_t tid;
+
+    tid = rt_thread_create("ai+2", ai_tell_me_a_story_thread, NULL, 8192, RT_MAIN_THREAD_PRIORITY / 2, 10);
+    rt_thread_startup(tid);
+
+    return 0;
+}
+MSH_CMD_EXPORT(ai_tell_me_a_story, tell me a story from kimi AI);
+
+#endif

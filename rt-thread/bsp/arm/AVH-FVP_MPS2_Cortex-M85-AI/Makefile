@@ -49,16 +49,17 @@ run:
 	@make stop
 	python rpc_fs/rpc_fs_server.py &
 	python ai/ai_bridge_server.py &
-	@sleep 1
-	/opt/VHT/bin/FVP_MPS2_Cortex-M85 --stat --simlimit $(AVH_SIMLIMIT_TIME) -f $(AVH_DEMO_PATH)/vht_config.txt $(OUT_PATH)/image.$(TARGET_FILE_SUFFIX) &
-	@sleep 3
-	@python avh_rtt_debug_client.py debug
-	@make stop
+#	@sleep 1
+	/opt/VHT/bin/FVP_MPS2_Cortex-M85 --stat --simlimit $(AVH_SIMLIMIT_TIME) -f $(AVH_DEMO_PATH)/vht_config.txt $(OUT_PATH)/image.$(TARGET_FILE_SUFFIX) 
+#	@sleep 3
+#	@python avh_rtt_debug_client.py debug
+#	@make stop
 
 stop:
 	@$(call KILL_EXE,/opt/VHT/bin/models/FVP_MPS2_Cortex-M85)
 	@$(call KILL_EXE,rpc_fs_server.py)
 	@$(call KILL_EXE,ai_bridge_server.py)
+	@$(call KILL_EXE,avh_rtt_debug_client.py)
 #	ps -ef | grep -v grep | grep /opt/VHT/bin/models/FVP_MPS2_Cortex-M85 | awk '{print $$2}' | xargs kill -9
 #	ps -ef | grep -v grep | grep zbar_app/zbar_auth_server.py | awk '{print $$2}' | xargs kill -9
 

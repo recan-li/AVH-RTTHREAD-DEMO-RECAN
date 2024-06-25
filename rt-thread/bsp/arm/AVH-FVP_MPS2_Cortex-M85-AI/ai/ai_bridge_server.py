@@ -5,6 +5,7 @@ import socket
 import os
 import shutil
 import binascii
+import time
 
 import base64
 import urllib
@@ -12,13 +13,21 @@ import requests
 import json
 import os
 
+import urllib
+import urllib.response
+import urllib.request
+import urllib.parse
+import http.cookiejar
+
+debug_mode = False
+
 API_KEY = "KgRRbuj3824giWkMOP5tQfON"
 SECRET_KEY = "hs2De8mXboVmznrQcl9paqTOSURojNfd"
 
 def speech_decode_by_pcm_online(audio_data_base64, audio_file_size):
 
-    print(len(audio_data_base64))
-    print(audio_file_size)
+    #print(len(audio_data_base64))
+    #print(audio_file_size)
 
     url = "https://vop.baidu.com/server_api"
     
@@ -38,14 +47,21 @@ def speech_decode_by_pcm_online(audio_data_base64, audio_file_size):
         'Accept': 'application/json'
     }
 
-    response = requests.request("POST", url, headers=headers, data=payload)    
+    response = requests.request("POST", url, headers=headers, data=payload)
+    #print(response)
     result = response.json()
+    #print(result)
+
+    if result['err_msg'] is not None:
+        ret_result = result['err_msg']
+        if ret_result == 'success.':
+            ret_result = result['result'][0]
 
     if debug_mode:
         #print(response.text)
-        print(result['result'][0])
+        print(ret_result)
 
-    return result['result'][0]
+    return ret_result
  
 def speech_decode_by_file_online(audio_file):
     # 读取语音文件并转换为base64格式
@@ -83,6 +99,113 @@ def get_access_token():
 #    speech_decode_by_file_online('./test.wav')
 #    speech_decode_by_file_online('./test1.raw')
 
+import requests
+
+def get_access_token2():
+    """
+    使用 AK，SK 生成鉴权签名（Access Token）
+    :return: access_token，或是None(如果错误)
+    """
+    url = "https://aip.baidubce.com/oauth/2.0/token"
+    params = {"grant_type": "client_credentials", "client_id": API_KEY, "client_secret": SECRET_KEY}
+    return str(requests.post(url, params=params).json().get("access_token"))
+
+def baidu_tts(text_req, audio_file):
+        
+    url = "https://tsn.baidu.com/text2audio"
+    
+    payload='tex=' + '1234567890' + '&tok='+ get_access_token2() +'&cuid=DfV47ziDDbsSE6a5nUarA4BDZGuXzrQB&ctp=1&lan=zh&spd=5&pit=5&vol=5&per=1&aue=4'
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': '*/*'
+    }
+    
+    print(payload)
+
+    response = requests.request("POST", url, headers=headers, data=payload)
+    print(response)
+
+    if response:
+        with open(audio_file, 'w') as f:
+            f.write(response.text)
+    
+    #print(response.text)
+
+def baidu_tts_plus_query(task_id):
+    url = "https://aip.baidubce.com/rpc/2.0/tts/v1/query?access_token=" + get_access_token()
+    
+    payload = json.dumps({
+        "task_ids": [
+            task_id
+        ]
+    })
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+    
+    response = requests.request("POST", url, headers=headers, data=payload)    
+    
+    if debug_mode:
+        print(response.encoding)
+        print(response.text)
+
+    rsp_json = response.json()
+    task_status = rsp_json['tasks_info'][0]['task_status']
+    if task_status == 'Success':
+        speech_url = rsp_json['tasks_info'][0]['task_result']['speech_url']
+        return speech_url
+    else:
+        return None
+
+def baidu_tts_plus(text_req, audio_file):
+        
+    url = "https://aip.baidubce.com/rpc/2.0/tts/v1/create?access_token=" + get_access_token2()
+    
+    payload = json.dumps({
+        "text": text_req,
+        "format": "mp3-16k",
+        "voice": 0,
+        "lang": "zh",
+        "speed": 5,
+        "pitch": 5,
+        "volume": 5,
+        "enable_subtitle": 0
+    })
+    #print(payload)
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+    
+    response = requests.request("POST", url, headers=headers, data=payload)
+    
+    #print(response.text)
+
+    rsp_json = response.json()
+    task_id = rsp_json['task_id']
+    #print(task_id)
+
+    while True:
+        url = baidu_tts_plus_query(task_id)
+        #print(url)
+        if url is not None:
+            try:
+                #print('download url file ...')
+                f = urllib.request.urlopen(url)
+                data = f.read()
+                with open(audio_file, "wb") as code:
+                  code.write(data)
+                #print('download url file ... ok')
+                break
+            except Exception as e:
+                print(e)
+        time.sleep(1)
+
+    return url
+
+################################################################3
+
 import openai
 import json
 import requests
@@ -117,8 +240,6 @@ def ai_get_answer_from_kimi(message):
         return "Error response now !"
 
 ##############################################################33
-
-debug_mode = True
 
 tcp_mode = False
 
@@ -203,8 +324,18 @@ while True:
                 #with open('2.txt', 'w') as f:
                 #    f.write(base64_data)
                 text_result = speech_decode_by_pcm_online(base64_data, file_len)
-                text_answer = ai_get_answer_from_kimi(text_result)
-                rsp_content = "{\"status\": \"ok\", \"text_req\": \"" + text_result + "\", \"text_rsp\": \"" + text_answer + "\"}"
+                rsp_content = "{\"status\": \"ok\", \"speech_rsp\": \"" + text_result + "\"}"        
+        elif operation == "kimi_ai":
+            text_req = parsed_data["text_req"]
+            text_rsp = ai_get_answer_from_kimi(text_req)            
+            rsp_content = "{\"status\": \"ok\", \"text_rsp\": \"" + text_rsp + "\"}"
+        elif operation == "baidu_tts":
+            text_req = parsed_data["text_req"]
+            audio_file = parsed_data["audio_file"]
+            #print('---===== ' + audio_file)
+            #baidu_tts(text_req, audio_file)
+            speech_url = baidu_tts_plus(text_req, audio_file)
+            rsp_content = "{\"status\": \"ok\", \"speech_url\": \"" + speech_url + "\"}"
         else:
             rsp_content = "{\"status\": \"unknown operation\"}"
 

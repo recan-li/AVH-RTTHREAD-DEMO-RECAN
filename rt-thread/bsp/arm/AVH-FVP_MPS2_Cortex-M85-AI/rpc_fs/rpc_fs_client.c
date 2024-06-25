@@ -130,7 +130,11 @@ cJSON *rpc_fs_cJSON_exhcange(cJSON *in, int exp_len)
 
     if (exp_len > recv_size) {
         recv_size = exp_len * 2 + 100;
-        p_buffer = (char *)malloc(recv_size);        
+        p_buffer = (char *)malloc(recv_size);
+        //printf("p_buffer: %p\n", p_buffer);
+        if (!p_buffer) {
+            printf("error buffer\n");
+        }      
     }     
 
 #if (CFG_AWS_IOT_SOCKET_ENABLE)
@@ -149,8 +153,8 @@ cJSON *rpc_fs_cJSON_exhcange(cJSON *in, int exp_len)
     int ret = recvfrom(g_sock, p_buffer, recv_size, 0, NULL, NULL);
 #endif
 #endif
-#if (DEBUG_MODE)
     //printf("ret: %d %d\n", ret, recv_size);
+#if (DEBUG_MODE)
     if (p_buffer == buffer) {
         printf("<<< %s\n", p_buffer);
     }
@@ -167,14 +171,15 @@ cJSON *rpc_fs_cJSON_exhcange(cJSON *in, int exp_len)
     RPC_FILE *file = NULL;
 
     rsp_root = cJSON_Parse(p_buffer);
+    //printf("rsp_root: %p\n", rsp_root);
     status = cJSON_GetObjectItem(rsp_root, "status");
-
+    //printf("%s:%d ...\n", __func__, __LINE__);
     if (strcmp(status->valuestring, "ok")) {
         printf("status err: %s\n", status->valuestring);
         cJSON_Delete(rsp_root);
         goto exit_entry;
     } 
-
+    //printf("%s:%d ...\n", __func__, __LINE__);
     rsp_ret = rsp_root;
 
 exit_entry:

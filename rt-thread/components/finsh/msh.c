@@ -43,7 +43,7 @@ static int msh_help(int argc, char **argv)
                 FINSH_NEXT_SYSCALL(index))
         {
 #if defined(FINSH_USING_DESCRIPTION) && defined(FINSH_USING_SYMTAB)
-            rt_kprintf("%-16s - %s\n", index->name, index->desc);
+            rt_kprintf("%-20s - %s\n", index->name, index->desc);
 #else
             rt_kprintf("%s ", index->name);
 #endif
@@ -72,7 +72,7 @@ static int cmd_ps(int argc, char **argv)
 MSH_CMD_EXPORT_ALIAS(cmd_ps, ps, List threads in the system);
 
 #ifdef RT_USING_HEAP
-static int cmd_free(int argc, char **argv)
+int cmd_free(int argc, char **argv)
 {
 #ifdef RT_USING_MEMHEAP_AS_HEAP
     extern void list_memheap(void);

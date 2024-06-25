@@ -25,27 +25,39 @@ extern int rpc_fs_main(int argc, const char *argv[]);
 void main_thread_entry22(void *arg)
 {
     //rpc_fs_main(1, NULL);
-    const char *argv[] = {
+
+    printf("\n");
+    printf("============ TEST PART 1 ============\n");
+
+    //ai_tell_me_a_story
+    const char *argv2[] = {
         "ai",
-        "./ai/test1.raw",
+        "./ai/test2.raw",
+        "./ai/test2-1.mp3",
     };
-    ai_bridge_main(2, argv);
+    ai_bridge_main(3, argv2); // warning: stack overflow
+
+    printf("\n");
+    printf("============ TEST PART 2 ============\n");
+
+#if 1
+    //ai_tell_me_a_joke
+    const char *argv3[] = {
+        "ai",
+        "./ai/test3.raw",
+        "./ai/test3-1.mp3",
+    };
+    ai_bridge_main(3, argv3); // warning: stack overflow
 
     while (1) {
         //printf("22222 %s:%d\n", __func__, __LINE__);
         rt_thread_delay(1000);
     }
+#endif
 }
 
-int main (void) 
-{   
-    int cnt = 1;
-
-    rt_thread_t tid;
-
-    tid = rt_thread_create("ai", main_thread_entry22, RT_NULL, 4096, RT_MAIN_THREAD_PRIORITY / 2, 10);
-    rt_thread_startup(tid);
-
+void main_thread_entry_debug_server(void *arg)
+{
     extern int avh_rtt_debug_server_main(int argc, const char *argv[]);
     const char *argv[] = 
     {
@@ -54,6 +66,21 @@ int main (void)
         "12346",
     };
     avh_rtt_debug_server_main(3, argv);
+}
+
+int main (void) 
+{   
+    int cnt = 1;
+
+    rt_thread_t tid1;
+
+    tid1 = rt_thread_create("debug", main_thread_entry_debug_server, RT_NULL, 8192, RT_MAIN_THREAD_PRIORITY / 2, 10);
+    rt_thread_startup(tid1);
+
+    rt_thread_t tid;
+
+    tid = rt_thread_create("ai", main_thread_entry22, RT_NULL, 8192, RT_MAIN_THREAD_PRIORITY / 4, 10);
+    rt_thread_startup(tid);
 
     while (1)
     {
