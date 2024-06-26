@@ -20,40 +20,20 @@
 #include <rtthread.h>
 
 extern int ai_bridge_main(int argc, const char *argv[]);
+extern int main_thread_ai_test(void);
 extern int rpc_fs_main(int argc, const char *argv[]);
 
-void main_thread_entry22(void *arg)
+void main_thread_ai_entry(void *arg)
 {
     //rpc_fs_main(1, NULL);
 
-    printf("\n");
-    printf("============ TEST PART 1 ============\n");
-
-    //ai_tell_me_a_story
-    const char *argv2[] = {
-        "ai",
-        "./ai/test2.raw",
-        "./ai/test2-1.mp3",
-    };
-    ai_bridge_main(3, argv2); // warning: stack overflow
-
-    printf("\n");
-    printf("============ TEST PART 2 ============\n");
-
-#if 1
-    //ai_tell_me_a_joke
-    const char *argv3[] = {
-        "ai",
-        "./ai/test3.raw",
-        "./ai/test3-1.mp3",
-    };
-    ai_bridge_main(3, argv3); // warning: stack overflow
+    main_thread_ai_test();
+    
 
     while (1) {
         //printf("22222 %s:%d\n", __func__, __LINE__);
         rt_thread_delay(1000);
     }
-#endif
 }
 
 void main_thread_entry_debug_server(void *arg)
@@ -74,12 +54,12 @@ int main (void)
 
     rt_thread_t tid1;
 
-    tid1 = rt_thread_create("debug", main_thread_entry_debug_server, RT_NULL, 8192, RT_MAIN_THREAD_PRIORITY / 2, 10);
-    rt_thread_startup(tid1);
+    tid1 = rt_thread_create("debug", main_thread_entry_debug_server, RT_NULL, 1024, RT_MAIN_THREAD_PRIORITY / 2, 10);
+    //rt_thread_startup(tid1);
 
     rt_thread_t tid;
 
-    tid = rt_thread_create("ai", main_thread_entry22, RT_NULL, 8192, RT_MAIN_THREAD_PRIORITY / 4, 10);
+    tid = rt_thread_create("ai", main_thread_ai_entry, RT_NULL, 8192, RT_MAIN_THREAD_PRIORITY / 4, 10);
     rt_thread_startup(tid);
 
     while (1)

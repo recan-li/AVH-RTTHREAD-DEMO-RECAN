@@ -535,9 +535,15 @@ int ai_bridge_baidu_tts(char *text_req, const char *audio_file, char *speech_url
     if (rsp_root) {
         cJSON *speech_url_obj = cJSON_GetObjectItem(rsp_root, "speech_url");
         if (speech_url_obj) {
-            printf("speech online url: %s\n", speech_url_obj->valuestring);
-            printf("speech local mp3 file: %s\n", audio_file);
-            strcpy(speech_url, speech_url_obj->valuestring);
+            char *p = strstr(speech_url_obj->valuestring, "err_msg: ");
+            if (p) {
+                printf("something goes wrong: %s\n", p + 9);
+            } else {
+                printf("speech online url (copy it to your web browser, you can enjoy it): %s\n", speech_url_obj->valuestring);
+                printf("speech local mp3 file: %s\n", audio_file);
+                strcpy(speech_url, speech_url_obj->valuestring);
+                ret = 0;  
+            }            
             ret = 0;
         }
         cJSON_Delete(rsp_root);
@@ -578,11 +584,7 @@ int ai_bridge_kimi_ai(char *text_req, char *text_rsp)
     return ret;
 }
 
-#ifndef AI_MAIN
 int ai_bridge_main(int argc, const char *argv[])
-#else
-int main(int argc, const char *argv[])
-#endif
 {   
     char speech_rsp[1024] = {0}; 
     char ai_text_rsp[2048] = {0};
@@ -613,10 +615,52 @@ int main(int argc, const char *argv[])
 
     //ai_bridge_baidu_stt(audio_file_out, speech_rsp);
 
+    return 0;
+}
+
+int main_thread_ai_test(void)
+{
+    //rpc_fs_main(1, NULL);
+
+    printf("\n");
+    printf("============ TEST PART 1 ============\n");
+
+    //ai_tell_me_a_story
+    const char *argv2[] = {
+        "ai",
+        "./ai/test2.raw",
+        "./ai/test2-1.mp3",
+    };
+    ai_bridge_main(3, argv2);
+
+    printf("\n");
+    printf("============ TEST PART 2 ============\n");
+
+    //ai_tell_me_a_joke
+    const char *argv3[] = {
+        "ai",
+        "./ai/test3.raw",
+        "./ai/test3-1.mp3",
+    };
+    ai_bridge_main(3, argv3);
+
     printf("exit this demo application by [CTRL + C] !!!\n");
 
     return 0;
 }
+
+#ifdef AI_MAIN
+int main(int argc, const char *argv[])
+{
+    if (argc == 1) {
+        main_thread_ai_test();
+    } else {
+        ai_bridge_main(argc, argv);
+    }
+
+    return 0;
+}
+#endif
 
 #ifdef __RTTHREAD__
 

@@ -6,6 +6,7 @@ import os
 import shutil
 import binascii
 import time
+import re
 
 import base64
 import urllib
@@ -155,6 +156,20 @@ def baidu_tts_plus_query(task_id):
     if task_status == 'Success':
         speech_url = rsp_json['tasks_info'][0]['task_result']['speech_url']
         return speech_url
+    elif task_status == 'Failure':
+        err_msg = rsp_json['tasks_info'][0]['task_result']['err_msg']
+        #print(err_msg)
+        json_pattern = r'\{.*?\}'
+        json_str = re.search(json_pattern, err_msg).group(0)
+        # 将匹配到的JSON字符串进行解析
+        try:
+            json_data = json.loads(json_str)
+            #print("Extracted JSON:", json_data)
+            #print(json_data['errmsg'])
+            return json_data['errmsg']
+        except json.JSONDecodeError as e:
+            print("Error decoding JSON:", e)
+        return None
     else:
         return None
 
@@ -177,30 +192,54 @@ def baidu_tts_plus(text_req, audio_file):
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
-    
+
+    if debug_mode:
+        print(url)
+
     response = requests.request("POST", url, headers=headers, data=payload)
     
-    #print(response.text)
-
     rsp_json = response.json()
+    if debug_mode:
+        print(rsp_json)
+
+    if 'error_msg' in rsp_json: 
+        url = rsp_json['error_msg']
+        return 'err_msg: ' + url
+
     task_id = rsp_json['task_id']
     #print(task_id)
+
+    max_cnt = 20
+    i = 0
 
     while True:
         url = baidu_tts_plus_query(task_id)
         #print(url)
         if url is not None:
-            try:
-                #print('download url file ...')
-                f = urllib.request.urlopen(url)
-                data = f.read()
-                with open(audio_file, "wb") as code:
-                  code.write(data)
-                #print('download url file ... ok')
+            if url.startswith('http://'):
+                try:
+                    #print('download url file ...')
+                    f = urllib.request.urlopen(url)
+                    data = f.read()
+                    with open(audio_file, "wb") as code:
+                      code.write(data)
+                    #print('download url file ... ok')
+                    break
+                except Exception as e:
+                    print(e)
+            else:
+                if debug_mode:
+                    print('err_msg: ' + url)
+                url = 'err_msg + (' + url + ')'
                 break
-            except Exception as e:
-                print(e)
-        time.sleep(1)
+        else:
+            i += 1
+            if i >= max_cnt:
+                if debug_mode:
+                    print('max retry times fail ...')
+                url = "err_msg: query respone timeout"
+                break
+            time.sleep(1)
 
     return url
 
