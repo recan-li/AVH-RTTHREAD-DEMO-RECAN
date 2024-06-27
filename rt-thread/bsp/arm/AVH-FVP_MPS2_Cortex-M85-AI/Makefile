@@ -19,6 +19,7 @@ all:  clean build run
 
 help:
 	@echo "make help 	-> Show this help msg."
+	@echo "make install 	-> Install python third-party package"
 	@echo "make build 	-> Build thie demo."
 	@echo "make clean 	-> Clean object files."
 	@echo "make run     -> Run this demo."
@@ -27,6 +28,10 @@ help:
 	@echo "make stop    -> Stop to run this demo."
 
 debug: build run stop
+
+install:
+	@echo "Installing ..."
+	@pip3 install -r requirements.txt
 
 build:
 	@echo "Building ..."
@@ -61,4 +66,4 @@ clean:
 	rm -rf $(AVH_DEMO_PATH)/Objects/
 	rm -rf $(OUT_PATH)
 
-.PHONY: all source clean build run help
+.PHONY: all install clean build run stop help
